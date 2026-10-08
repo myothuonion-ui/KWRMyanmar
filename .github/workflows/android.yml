@@ -66,6 +66,8 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
+            python3 scripts/prepare_integration.py
+            flutter build apk --release --target=integration_test/app_test.dart
             timeout 15m ./android/gradlew -p android app:connectedReleaseAndroidTest "-Ptarget=$PWD/integration_test/app_test.dart"
             python3 scripts/smoke_android.py
       - uses: actions/upload-artifact@v4
