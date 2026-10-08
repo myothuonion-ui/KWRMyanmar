@@ -1,0 +1,65 @@
+name: Android APK
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Create Android host
+        run: |
+          flutter create --platforms=android --org=com.myothuonion --project-name=kwrmyanmar --no-pub /tmp/kwr_host
+          cp -R /tmp/kwr_host/android .
+          python3 scripts/prepare_android.py
+      - name: Keep preview signing identity
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: kwr-preview-signing-v1
+      - name: Dependencies
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Test
+        run: flutter test
+      - name: Build APK
+        run: flutter build apk --release
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/KWRMyanmar-v0.1.0.apk
+          cd dist
+          sha256sum KWRMyanmar-v0.1.0.apk > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: KWRMyanmar-Android
+          path: |
+            dist/*
+            pubspec.lock
+          retention-days: 30
+      - name: Publish preview download
+        if: ${{ !contains(github.event.head_commit.message, '[bootstrap]') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=v0.1.0
+          if ! gh release view "$VERSION" >/dev/null 2>&1; then
+            gh release create "$VERSION" --target "$GITHUB_SHA" --title 'KWR Myanmar 0.1.0 Preview' --prerelease --notes-file docs/RELEASE.md
+          fi
+          gh release upload "$VERSION" dist/* --clobber
