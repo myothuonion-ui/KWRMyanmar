@@ -5,7 +5,7 @@ text=p.read_text()
 text=text.replace('minSdk = flutter.minSdkVersion','minSdk = 23')
 assert 'release {' in text, 'Flutter Android template changed'
 text=text.replace('release {','release {\n            proguardFiles("proguard-rules.pro")',1)
-text=text.replace('defaultConfig {','defaultConfig {\n        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"',1)
+text=text.replace('defaultConfig {','defaultConfig {\n        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"\n        testProguardFiles("proguard-test-rules.pro")',1)
 text=text.replace('android {','android {\n    testBuildType = "release"',1)
 text += '''
 dependencies {
@@ -28,6 +28,14 @@ Path('android/app/proguard-rules.pro').write_text('''# The Flutter OCR bridge re
 -keep class org.junit.** { *; }
 -keep class junit.** { *; }
 -keep class org.hamcrest.** { *; }
+-keepattributes *Annotation*
+''')
+Path('android/app/proguard-test-rules.pro').write_text('''-keep class com.myothuonion.kwrmyanmar.MainActivityTest { *; }
+-keep class androidx.test.** { *; }
+-keep class org.junit.** { *; }
+-keep class junit.** { *; }
+-keep class org.hamcrest.** { *; }
+-keep class dev.flutter.plugins.integration_test.** { *; }
 -keepattributes *Annotation*
 ''')
 test=Path('android/app/src/androidTest/java/com/myothuonion/kwrmyanmar/MainActivityTest.java')
