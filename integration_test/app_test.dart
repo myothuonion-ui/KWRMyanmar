@@ -45,8 +45,15 @@ void main(){
       await tester.tap(find.descendant(of:find.byType(NavigationBar),matching:find.text(label)));await tester.pumpAndSettle();expect(tester.takeException(),isNull);
     }
     await tester.tap(find.descendant(of:find.byType(NavigationBar),matching:find.text('AI')));await tester.pumpAndSettle();
-    await tester.enterText(find.descendant(of:find.byType(ChatScreen),matching:find.byType(TextField)),'အလုပ်ထုတ်');await tester.tap(find.byTooltip('မေးမယ်'));await tester.pumpAndSettle();
-    expect(state.history,isNotEmpty);expect(state.history.first['online'],false);expect(state.history.first['source_ids'],isNotEmpty);
+    // Release mode rejects the debug-only -1 text-input client. Register the
+    // test IME so setClient supplies the real connection ID before injection.
+    tester.testTextInput.register();
+    addTearDown(tester.testTextInput.unregister);
+    final inputFinder=find.descendant(of:find.byType(ChatScreen),matching:find.byType(TextField));
+    await tester.enterText(inputFinder,'အလုပ်ထုတ်');await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(inputFinder).controller!.text,'အလုပ်ထုတ်',reason:'release text-input connection');
+    await tester.tap(find.byTooltip('မေးမယ်'));await tester.pumpAndSettle();
+    expect(state.history,isNotEmpty,reason:'offline reply saved');expect(state.history.first['online'],false);expect(state.history.first['source_ids'],isNotEmpty,reason:'retrieved source cards');
     await state.reset();await tester.pumpAndSettle();expect(state.history,isEmpty);expect(tester.takeException(),isNull);
     print('NATIVE_STAGE: complete');
     } catch(error,stack) { print('NATIVE_FAILURE: $error\n$stack'); rethrow; }
