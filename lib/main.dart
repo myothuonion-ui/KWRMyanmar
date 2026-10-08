@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'core/app_state.dart';
+import 'screens/home.dart';
+import 'screens/chat.dart';
+import 'screens/calculators.dart';
+import 'screens/files.dart';
+import 'screens/settings.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,9 +17,26 @@ class KwrApp extends StatelessWidget {
   const KwrApp(this.state,{super.key});
   @override Widget build(BuildContext context)=>MaterialApp(
     title:'KWR Myanmar',debugShowCheckedModeBanner:false,
-    theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xff086e76)),useMaterial3:true),
-    home:Scaffold(appBar:AppBar(title:const Text('KWR Myanmar')),body:ListView(
-      padding:const EdgeInsets.all(20),children:state.cards.map((c)=>Card(child:Padding(
-        padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,
-        children:[Text(c.title),const SizedBox(height:12),Text(c.summary)])))).toList())));
+    theme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xff086e76)),scaffoldBackgroundColor:const Color(0xfff6f8f7),useMaterial3:true),
+    darkTheme:ThemeData(colorScheme:ColorScheme.fromSeed(seedColor:const Color(0xff58b5b9),brightness:Brightness.dark),useMaterial3:true),
+    home:AppShell(state));
+}
+
+class AppShell extends StatefulWidget {
+  final AppState state;const AppShell(this.state,{super.key});
+  @override State<AppShell> createState()=>_AppShellState();
+}
+class _AppShellState extends State<AppShell> {
+  int index=0;final chatKey=GlobalKey<ChatScreenState>();
+  void ask(String question){setState(()=>index=1);chatKey.currentState?.setQuestion(question);}
+  @override Widget build(BuildContext context)=>ListenableBuilder(listenable:widget.state,builder:(context,_)=>Scaffold(
+    appBar:AppBar(title:const Text('KWR Myanmar'),actions:[IconButton(tooltip:'Settings',onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>SettingsScreen(widget.state))),icon:const Icon(Icons.settings_outlined))]),
+    body:IndexedStack(index:index,children:[HomeScreen(widget.state,ask),ChatScreen(widget.state,key:chatKey),VisaScreen(widget.state,ask),PayScreen(widget.state),FilesScreen(widget.state)]),
+    bottomNavigationBar:NavigationBar(selectedIndex:index,onDestinationSelected:(v)=>setState(()=>index=v),destinations:const[
+      NavigationDestination(icon:Icon(Icons.space_dashboard_outlined),selectedIcon:Icon(Icons.space_dashboard),label:'ကတ်များ'),
+      NavigationDestination(icon:Icon(Icons.chat_bubble_outline),selectedIcon:Icon(Icons.chat_bubble),label:'AI'),
+      NavigationDestination(icon:Icon(Icons.badge_outlined),selectedIcon:Icon(Icons.badge),label:'Visa'),
+      NavigationDestination(icon:Icon(Icons.calculate_outlined),selectedIcon:Icon(Icons.calculate),label:'လစာ'),
+      NavigationDestination(icon:Icon(Icons.folder_outlined),selectedIcon:Icon(Icons.folder),label:'ကိုယ့်ဖိုင်')
+    ])));
 }
