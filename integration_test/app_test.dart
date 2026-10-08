@@ -14,6 +14,13 @@ import 'package:kwrmyanmar/screens/chat.dart';
 void main(){
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
   testWidgets('native vault, OCR, PDF and offline navigation',(tester) async {
+    final reportError=FlutterError.onError;
+    FlutterError.onError=(details){
+      print('NATIVE_FLUTTER_ERROR: ${details.exceptionAsString()}\n${details.stack}');
+      reportError?.call(details);
+    };
+    try {
+    print('NATIVE_STAGE: vault');
     final state=await AppState.load();await state.reset();
     await state.setProfile({'visa':'E-9','workers':'5+','confirmed':true,'sector':'PRIVATE_TEST_FACT'});
     final encrypted=await File('${state.vault.directory.path}/state.enc').readAsBytes();
@@ -21,14 +28,17 @@ void main(){
     final reopened=await Vault.open();expect((await reopened.load())['profile']['sector'],'PRIVATE_TEST_FACT');
     await reopened.setKey('gemini','TEST_NOT_REAL');expect(await reopened.keyFor('gemini'),'TEST_NOT_REAL');await reopened.setKey('gemini','');
     await reopened.writeDocument('native-test',Uint8List.fromList([5,6,7]));expect(await reopened.readDocument('native-test'),[5,6,7]);await reopened.deleteDocument('native-test');
+    print('NATIVE_STAGE: OCR');
     final recorder=ui.PictureRecorder();final canvas=Canvas(recorder);
     canvas.drawRect(const Rect.fromLTWH(0,0,1400,220),Paint()..color=Colors.white);
     final painter=TextPainter(text:const TextSpan(text:'CONTRACT 2026',style:TextStyle(color:Colors.black,fontSize:110)),textDirection:TextDirection.ltr)..layout();painter.paint(canvas,const Offset(30,45));
     final picture=recorder.endRecording();final image=await picture.toImage(1400,220);final png=await image.toByteData(format:ui.ImageByteFormat.png);
     final extracted=await DocumentService().extract(png!.buffer.asUint8List(),'png',(_){});expect(extracted.toUpperCase(),contains('CONTRACT'));
     image.dispose();picture.dispose();
+    print('NATIVE_STAGE: PDF');
     final pdf=base64Decode(testPdfBase64);
     final pdfText=await DocumentService().extract(pdf,'pdf',(_){});expect(pdfText,contains('CONTRACT TEST'));expect(pdfText,contains('Page 1'));
+    print('NATIVE_STAGE: navigation');
     await tester.pumpWidget(KwrApp(state));await tester.pumpAndSettle();
     expect(find.text('KWR Myanmar'),findsOneWidget);
     for(final label in ['AI','Visa','လစာ','ကိုယ့်ဖိုင်','ကတ်များ']){
@@ -38,6 +48,8 @@ void main(){
     await tester.enterText(find.descendant(of:find.byType(ChatScreen),matching:find.byType(TextField)),'အလုပ်ထုတ်');await tester.tap(find.byTooltip('မေးမယ်'));await tester.pumpAndSettle();
     expect(state.history,isNotEmpty);expect(state.history.first['online'],false);expect(state.history.first['source_ids'],isNotEmpty);
     await state.reset();await tester.pumpAndSettle();expect(state.history,isEmpty);expect(tester.takeException(),isNull);
+    print('NATIVE_STAGE: complete');
+    } catch(error,stack) { print('NATIVE_FAILURE: $error\n$stack'); rethrow; }
   });
 }
 
