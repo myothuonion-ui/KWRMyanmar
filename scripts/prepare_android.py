@@ -10,9 +10,9 @@ text=text.replace('android {','android {\n    testBuildType = "release"',1)
 text += '''
 dependencies {
     implementation("com.google.mlkit:text-recognition-korean:16.0.1")
-    androidTestImplementation("androidx.test:runner:1.5.2")
-    androidTestImplementation("androidx.test:rules:1.5.0")
-    androidTestImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:runner:1.3.0")
+    androidTestImplementation("androidx.test:rules:1.2.0")
+    androidTestImplementation("junit:junit:4.12")
 }
 '''
 p.write_text(text)
