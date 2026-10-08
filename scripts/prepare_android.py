@@ -21,6 +21,11 @@ Path('android/app/proguard-rules.pro').write_text('''# The Flutter OCR bridge re
 -dontwarn com.google.mlkit.vision.text.chinese.**
 -dontwarn com.google.mlkit.vision.text.devanagari.**
 -dontwarn com.google.mlkit.vision.text.japanese.**
+# ML Kit's component factories are discovered by reflection. AGP 9's R8
+# can otherwise remove them and return null when creating the OCR recognizer.
+-keep class com.google.mlkit.** { *; }
+-keep class com.google.android.gms.internal.mlkit_** { *; }
+-keep class * implements com.google.firebase.components.ComponentRegistrar { public <init>(); }
 # Native instrumentation references this plugin from the separate test APK.
 -keep class dev.flutter.plugins.integration_test.** { *; }
 # The test APK manifest names a runner supplied by the test-target app runtime.
