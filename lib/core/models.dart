@@ -59,8 +59,9 @@ class AiAnswer {
     try {
       final j=jsonDecode(clean) as Map<String,dynamic>;
       final ids=List<String>.from(j['source_ids'] ?? []);
-      final valid=ids.every(allowedSources.contains) &&
-          j['answer'] is String && j['questions'] is List && j['steps'] is List;
+      final valid=j['source_ids'] is List && ids.every(allowedSources.contains) &&
+          j['answer'] is String && (j['answer'] as String).trim().isNotEmpty &&
+          j['questions'] is List && j['steps'] is List;
       return AiAnswer(j['answer']?.toString() ?? '',
         List<String>.from(j['questions'] ?? []), List<String>.from(j['steps'] ?? []),
         ids.where(allowedSources.contains).toList(), valid);

@@ -9,9 +9,9 @@ Widget sectionTitle(BuildContext context,String text)=>Padding(
   padding:const EdgeInsets.only(top:18,bottom:10),child:Text(text,style:Theme.of(context).textTheme.titleMedium));
 Widget note(BuildContext context,String text)=>Padding(padding:const EdgeInsets.symmetric(vertical:8),
   child:Text(text,style:Theme.of(context).textTheme.bodySmall?.copyWith(height:1.8,color:Theme.of(context).colorScheme.onSurfaceVariant)));
-Widget field(String label,TextEditingController controller,{int lines=1,bool number=false, bool obscure=false})=>Padding(
+Widget field(String label,TextEditingController controller,{int lines=1,bool number=false, bool obscure=false,ValueChanged<String>? onChanged})=>Padding(
   padding:const EdgeInsets.symmetric(vertical:8),child:TextField(controller:controller,maxLines:lines,
-    obscureText:obscure,keyboardType:number?const TextInputType.numberWithOptions(decimal:true):null,
+    obscureText:obscure,onChanged:onChanged,keyboardType:number?const TextInputType.numberWithOptions(decimal:true):null,
     decoration:InputDecoration(labelText:label,border:const OutlineInputBorder())));
 Future<void> openSource(BuildContext context,String url) async {
   try {final ok=await launchUrl(Uri.parse(url),mode:LaunchMode.externalApplication);

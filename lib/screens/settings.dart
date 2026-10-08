@@ -35,7 +35,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     finally{if(mounted)setState(()=>busy=false);}
   }
   Future<void> save() async {
-    if(providerId=='custom') AiService().endpoint(base.text.trim(),'models');
+    if(providerId=='custom'){final validator=AiService();try{validator.endpoint(base.text.trim(),'models');}finally{validator.close();}}
     await widget.state.vault.setKey(providerId,keyInput.text.trim());
     await widget.state.setProvider(providerId,{'model':model.text.trim(),'models':models,'base':base.text.trim()});
     await widget.state.setSetting('provider',providerId);
@@ -60,7 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         TextField(controller:search,onChanged:(_)=>setDialog((){}),decoration:const InputDecoration(prefixIcon:Icon(Icons.search),hintText:'Model ID ရှာရန်')),
         Expanded(child:ListView(children:models.where((m)=>m.toLowerCase().contains(search.text.toLowerCase())).map((m)=>ListTile(title:Text(m),onTap:()=>Navigator.pop(context,m))).toList()))
       ])),actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('ပိတ်မယ်'))])));
-    search.dispose();
+    Future<void>.delayed(const Duration(milliseconds:400),search.dispose);
     if(chosen!=null && mounted)setState(()=>model.text=chosen);
   }
   Future<void> export() async {

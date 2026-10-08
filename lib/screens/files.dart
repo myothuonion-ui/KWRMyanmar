@@ -35,6 +35,7 @@ class _FilesScreenState extends State<FilesScreen> {
       await widget.state.vault.writeDocument(id,bytes);
       final document=PersonalDocument(id:id,name:file.name,kind:kind,text:text,created:DateTime.now().toIso8601String());
       try{await widget.state.putDocument(document);}catch(_){await widget.state.vault.deleteDocument(id);rethrow;}
+      try{await FilePicker.clearTemporaryFiles();}catch(_){}
       if(mounted){
         if(warning.isNotEmpty)message(context,warning);
         await Navigator.push(context,MaterialPageRoute(builder:(_)=>DocumentEditor(widget.state,id)));
@@ -53,7 +54,7 @@ class _FilesScreenState extends State<FilesScreen> {
     if(date==null || !mounted)return;
     final title=TextEditingController();
     final text=await showDialog<String>(context:context,builder:(context)=>AlertDialog(title:Text(dateLabel(date)),content:field('ဖြစ်ရပ် / official deadline မှတ်စု',title,lines:3),actions:[TextButton(onPressed:()=>Navigator.pop(context),child:const Text('ပိတ်မယ်')),FilledButton(onPressed:()=>Navigator.pop(context,title.text.trim()),child:const Text('သိမ်းမယ်'))]));
-    title.dispose();
+    Future<void>.delayed(const Duration(milliseconds:400),title.dispose);
     if(text!=null && text.isNotEmpty)await widget.state.addEvent({'date':dateLabel(date),'title':text});
   }
   @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(20),children:[

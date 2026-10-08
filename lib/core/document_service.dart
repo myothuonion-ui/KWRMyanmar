@@ -14,8 +14,7 @@ class DocumentService {
       await file.writeAsBytes(bytes,flush:true);
       return (await recognizer.processImage(InputImage.fromFilePath(file.path))).text;
     } finally {
-      await recognizer.close();
-      if(await file.exists()) await file.delete();
+      try {await recognizer.close();}finally{if(await file.exists()) await file.delete();}
     }
   }
   Future<String> extract(Uint8List bytes,String extension,void Function(String) progress) async {

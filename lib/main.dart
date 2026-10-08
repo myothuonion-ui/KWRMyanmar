@@ -27,16 +27,18 @@ class AppShell extends StatefulWidget {
   @override State<AppShell> createState()=>_AppShellState();
 }
 class _AppShellState extends State<AppShell> {
-  int index=0;final chatKey=GlobalKey<ChatScreenState>();
+  int index=0,resetVersion=0;var chatKey=GlobalKey<ChatScreenState>();
   void ask(String question){setState(()=>index=1);chatKey.currentState?.setQuestion(question);}
-  @override Widget build(BuildContext context)=>ListenableBuilder(listenable:widget.state,builder:(context,_)=>Scaffold(
+  @override Widget build(BuildContext context)=>ListenableBuilder(listenable:widget.state,builder:(context,_){
+    if(resetVersion!=widget.state.resetVersion){resetVersion=widget.state.resetVersion;chatKey=GlobalKey<ChatScreenState>();index=0;}
+    return Scaffold(
     appBar:AppBar(title:const Text('KWR Myanmar'),actions:[IconButton(tooltip:'Settings',onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>SettingsScreen(widget.state))),icon:const Icon(Icons.settings_outlined))]),
-    body:IndexedStack(index:index,children:[HomeScreen(widget.state,ask),ChatScreen(widget.state,key:chatKey),VisaScreen(widget.state,ask),PayScreen(widget.state),FilesScreen(widget.state)]),
+    body:IndexedStack(key:ValueKey(resetVersion),index:index,children:[HomeScreen(widget.state,ask),ChatScreen(widget.state,key:chatKey),VisaScreen(widget.state,ask),PayScreen(widget.state),FilesScreen(widget.state)]),
     bottomNavigationBar:NavigationBar(selectedIndex:index,onDestinationSelected:(v)=>setState(()=>index=v),destinations:const[
       NavigationDestination(icon:Icon(Icons.space_dashboard_outlined),selectedIcon:Icon(Icons.space_dashboard),label:'ကတ်များ'),
       NavigationDestination(icon:Icon(Icons.chat_bubble_outline),selectedIcon:Icon(Icons.chat_bubble),label:'AI'),
       NavigationDestination(icon:Icon(Icons.badge_outlined),selectedIcon:Icon(Icons.badge),label:'Visa'),
       NavigationDestination(icon:Icon(Icons.calculate_outlined),selectedIcon:Icon(Icons.calculate),label:'လစာ'),
       NavigationDestination(icon:Icon(Icons.folder_outlined),selectedIcon:Icon(Icons.folder),label:'ကိုယ့်ဖိုင်')
-    ])));
+    ]));});
 }

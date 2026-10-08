@@ -8,6 +8,7 @@ class AppState extends ChangeNotifier {
   final Vault vault;
   final List<LegalCard> cards;
   Map<String,dynamic> data;
+  int resetVersion=0;
   AppState(this.vault,this.cards,this.data);
   static Future<AppState> load() async {
     final vault=await Vault.open();
@@ -58,6 +59,7 @@ class AppState extends ChangeNotifier {
     data['events']=[...events,event];await save();
   }
   Future<void> reset() async {
+    resetVersion++;
     await vault.clear();data={'profile':{'visa':'E-9','nationality':'Myanmar','workers':'unknown','sector':'မသိသေး'},
       'settings':{'provider':'gemini','online':false,'profileContext':false,'providers':<String,dynamic>{}},
       'documents':[],'history':[],'bookmarks':[],'events':[]};await save();
