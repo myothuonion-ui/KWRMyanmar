@@ -23,6 +23,12 @@ Path('android/app/proguard-rules.pro').write_text('''# The Flutter OCR bridge re
 -dontwarn com.google.mlkit.vision.text.japanese.**
 # Native instrumentation references this plugin from the separate test APK.
 -keep class dev.flutter.plugins.integration_test.** { *; }
+# The test APK manifest names a runner supplied by the test-target app runtime.
+-keep class androidx.test.** { *; }
+-keep class org.junit.** { *; }
+-keep class junit.** { *; }
+-keep class org.hamcrest.** { *; }
+-keepattributes *Annotation*
 ''')
 test=Path('android/app/src/androidTest/java/com/myothuonion/kwrmyanmar/MainActivityTest.java')
 test.parent.mkdir(parents=True,exist_ok=True)
