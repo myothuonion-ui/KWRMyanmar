@@ -18,23 +18,23 @@ void main(){
           expect(request.url.path,endsWith('models/test-model:generateContent'));
           expect(body['systemInstruction']['parts'][0]['text'],'policy');
           expect(body['contents'][0]['parts'][0]['text'],'question');
-          return http.Response(jsonEncode({'candidates':[{'content':{'parts':[{'thought':true,'text':'hidden'},{'text':'အဖြေ'}]}}]}),200,encoding:utf8);
+          return http.Response(jsonEncode({'candidates':[{'content':{'parts':[{'thought':true,'text':'hidden'},{'text':'အဖြေ'}]}}]}),200,headers:{'content-type':'application/json; charset=utf-8'});
         }
         if(provider.id=='claude'){
           expect(request.headers['x-api-key'],'TEST_KEY');expect(request.headers['anthropic-version'],'2023-06-01');
           expect(request.url.path,endsWith('/messages'));expect(body['system'],'policy');
           expect(body['messages'][0]['content'],'question');
-          return http.Response(jsonEncode({'content':[{'type':'text','text':'အဖြေ'}]}),200,encoding:utf8);
+          return http.Response(jsonEncode({'content':[{'type':'text','text':'အဖြေ'}]}),200,headers:{'content-type':'application/json; charset=utf-8'});
         }
         expect(request.headers['Authorization'],'Bearer TEST_KEY');
         if(provider.id=='openai'){
           expect(request.url.path,endsWith('/responses'));expect(body['store'],false);expect(body['instructions'],'policy');
           expect(body['input'][0]['content'],'question');
-          return http.Response(jsonEncode({'output':[{'type':'message','content':[{'type':'output_text','text':'အဖြေ'}]}]}),200,encoding:utf8);
+          return http.Response(jsonEncode({'output':[{'type':'message','content':[{'type':'output_text','text':'အဖြေ'}]}]}),200,headers:{'content-type':'application/json; charset=utf-8'});
         }
         expect(request.url.path,endsWith('/chat/completions'));expect(body['messages'][0],{'role':'system','content':'policy'});
         expect(body['messages'][1]['content'],'question');
-        return http.Response(jsonEncode({'choices':[{'message':{'content':'အဖြေ'}}]}),200,encoding:utf8);
+        return http.Response(jsonEncode({'choices':[{'message':{'content':'အဖြေ'}}]}),200,headers:{'content-type':'application/json; charset=utf-8'});
       }));
       expect(await ai.chat(provider:provider,base:provider.baseUrl,key:'TEST_KEY',model:'test-model',system:'policy',messages:[{'role':'user','content':'question'}]),'အဖြေ');
       ai.close();
@@ -44,14 +44,14 @@ void main(){
     var pages=0;
     final ai=AiService(client:MockClient((request) async {
       pages++;
-      if(pages==1){expect(request.url.queryParameters['pageToken'],isNull);return http.Response(jsonEncode({'models':[{'name':'models/embed-only','supportedGenerationMethods':['embedContent']},{'name':'models/chat-a','supportedGenerationMethods':['generateContent']}],'nextPageToken':'next'}),200,encoding:utf8);}
-      expect(request.url.queryParameters['pageToken'],'next');return http.Response(jsonEncode({'models':[{'name':'models/chat-b','supportedGenerationMethods':['generateContent']}]}),200,encoding:utf8);
+      if(pages==1){expect(request.url.queryParameters['pageToken'],isNull);return http.Response(jsonEncode({'models':[{'name':'models/embed-only','supportedGenerationMethods':['embedContent']},{'name':'models/chat-a','supportedGenerationMethods':['generateContent']}],'nextPageToken':'next'}),200,headers:{'content-type':'application/json; charset=utf-8'});}
+      expect(request.url.queryParameters['pageToken'],'next');return http.Response(jsonEncode({'models':[{'name':'models/chat-b','supportedGenerationMethods':['generateContent']}]}),200,headers:{'content-type':'application/json; charset=utf-8'});
     }));
     expect(await ai.listModels(providers.first,providers.first.baseUrl,'TEST_KEY'),['chat-a','chat-b']);expect(pages,2);ai.close();
   });
   test('Claude model pagination follows last_id',() async {
     var pages=0;final p=providers.firstWhere((p)=>p.id=='claude');
-    final ai=AiService(client:MockClient((request) async {pages++;return http.Response(jsonEncode(pages==1?{'data':[{'id':'claude-a'}],'has_more':true,'last_id':'claude-a'}:{'data':[{'id':'claude-b'}],'has_more':false}),200,encoding:utf8);}));
+    final ai=AiService(client:MockClient((request) async {pages++;return http.Response(jsonEncode(pages==1?{'data':[{'id':'claude-a'}],'has_more':true,'last_id':'claude-a'}:{'data':[{'id':'claude-b'}],'has_more':false}),200,headers:{'content-type':'application/json; charset=utf-8'});}));
     expect(await ai.listModels(p,p.baseUrl,'TEST_KEY'),['claude-a','claude-b']);expect(pages,2);ai.close();
   });
   test('provider errors hide the API key',() async {

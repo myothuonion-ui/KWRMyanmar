@@ -119,7 +119,7 @@ class _DocumentEditorState extends State<DocumentEditor> {
   Future<void> save() async {
     if(text.text.trim().length>180000){message(context,'စာသား 180,000 characters ထက်ကျော်နေသည်။ ခွဲ၍သိမ်းပါ။');return;}
     setState(()=>saving=true);
-    try {await widget.state.putDocument(original.copyWith(text:text.text,confirmed:confirmed&&text.text.trim().isNotEmpty,selected:selected&&confirmed));if(context.mounted){message(context,'စာသားနှင့်ရွေးချယ်မှုသိမ်းပြီးပြီ။');Navigator.pop(context);}}
+    try {await widget.state.putDocument(original.copyWith(text:text.text,confirmed:confirmed&&text.text.trim().isNotEmpty,selected:selected&&confirmed));if(mounted){message(context,'စာသားနှင့်ရွေးချယ်မှုသိမ်းပြီးပြီ။');Navigator.pop(context);}}
     catch(e){if(mounted)message(context,e.toString());}
     finally{if(mounted)setState(()=>saving=false);}
   }
