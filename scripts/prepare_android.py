@@ -5,13 +5,36 @@ text=p.read_text()
 text=text.replace('minSdk = flutter.minSdkVersion','minSdk = 23')
 assert 'release {' in text, 'Flutter Android template changed'
 text=text.replace('release {','release {\n            proguardFiles("proguard-rules.pro")',1)
-text += '\ndependencies {\n    implementation("com.google.mlkit:text-recognition-korean:16.0.1")\n}\n'
+text=text.replace('defaultConfig {','defaultConfig {\n        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"',1)
+text=text.replace('android {','android {\n    testBuildType = "release"',1)
+text += '''
+dependencies {
+    implementation("com.google.mlkit:text-recognition-korean:16.0.1")
+    androidTestImplementation("androidx.test:runner:1.5.2")
+    androidTestImplementation("androidx.test:rules:1.5.0")
+    androidTestImplementation("junit:junit:4.13.2")
+}
+'''
 p.write_text(text)
 Path('android/app/proguard-rules.pro').write_text('''# The Flutter OCR bridge references optional scripts. This app only calls Korean.
 # Korean/Latin dependencies remain bundled and are exercised in release integration tests.
 -dontwarn com.google.mlkit.vision.text.chinese.**
 -dontwarn com.google.mlkit.vision.text.devanagari.**
 -dontwarn com.google.mlkit.vision.text.japanese.**
+# Native instrumentation references this plugin from the separate test APK.
+-keep class dev.flutter.plugins.integration_test.** { *; }
+''')
+test=Path('android/app/src/androidTest/java/com/myothuonion/kwrmyanmar/MainActivityTest.java')
+test.parent.mkdir(parents=True,exist_ok=True)
+test.write_text('''package com.myothuonion.kwrmyanmar;
+import androidx.test.rule.ActivityTestRule;
+import dev.flutter.plugins.integration_test.FlutterTestRunner;
+import org.junit.Rule;
+import org.junit.runner.RunWith;
+@RunWith(FlutterTestRunner.class)
+public class MainActivityTest {
+  @Rule public ActivityTestRule<MainActivity> rule = new ActivityTestRule<>(MainActivity.class, true, false);
+}
 ''')
 p=Path('android/app/src/main/AndroidManifest.xml')
 text=p.read_text().replace('<application','<uses-permission android:name="android.permission.INTERNET"/>\n    <application',1)

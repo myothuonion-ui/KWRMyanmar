@@ -18,6 +18,10 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            pubspec.yaml
+            scripts/prepare_android.py
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -62,14 +66,16 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
-            flutter test integration_test/app_test.dart -d emulator-5554 --release
+            timeout 15m ./android/gradlew -p android app:connectedReleaseAndroidTest "-Ptarget=$PWD/integration_test/app_test.dart"
             python3 scripts/smoke_android.py
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: KWRMyanmar-Android
           path: |
             dist/
             pubspec.lock
+            build/app/reports/androidTests/
           retention-days: 30
       - name: Publish preview download
         if: ${{ !contains(github.event.head_commit.message, '[bootstrap]') }}
