@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kwrmyanmar/core/app_state.dart';
@@ -170,4 +172,84 @@ void main() {
     await tester.pumpWidget(const SizedBox());
     state.dispose();
   });
+  testWidgets(
+    'tab changes keep the header painted and preserve the search query',
+    (tester) async {
+      final state = await makeState();
+      final key = GlobalKey();
+      await tester.pumpWidget(RepaintBoundary(key: key, child: KwrApp(state)));
+      await tester.pumpAndSettle();
+      Future<List<int>> header() async {
+        final pixels = await tester.runAsync(() async {
+          final image =
+              await (key.currentContext!.findRenderObject()
+                      as RenderRepaintBoundary)
+                  .toImage(pixelRatio: 1);
+          final bytes = await image.toByteData(
+            format: ui.ImageByteFormat.rawRgba,
+          );
+          final rows = bytes!.buffer.asUint8List().sublist(
+            0,
+            image.width * 40 * 4,
+          );
+          image.dispose();
+          return rows;
+        });
+        return pixels!;
+      }
+
+      final expected = await header();
+      for (final label in [
+        'လက်စွဲ',
+        'ရှာဖွေ',
+        'သိမ်းထား',
+        'ကိုယ့်ဖိုင်',
+        'ပင်မ',
+      ]) {
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text(label),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          await header(),
+          expected,
+          reason: 'toolbar pixels remain at their correct position',
+        );
+      }
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('ရှာဖွေ'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'လစာမရ');
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('လက်စွဲ'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('ရှာဖွေ'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
+        'လစာမရ',
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      state.dispose();
+    },
+  );
 }

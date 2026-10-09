@@ -233,7 +233,7 @@ class _AppShellState extends State<AppShell> {
             SearchScreen(widget.state, ask, key: searchKey),
             SavedScreen(widget.state, ask),
             FilesScreen(widget.state),
-          ],
+          ].map((child) => RepaintBoundary(child: child)).toList(),
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: index,

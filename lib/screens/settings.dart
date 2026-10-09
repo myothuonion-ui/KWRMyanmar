@@ -331,13 +331,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const Divider(height: 28),
         note(
           context,
-          'KWR Myanmar 0.2.0 Preview · Android 6+\nလက်စွဲ၊ မူရင်း PDF၊ စာရွက်ဖတ်ခြင်း၊ လစာနှင့် milestone တွက်ခြင်းတို့ offline သုံးနိုင်သည်။ AI model အဖြေအသစ်အတွက် internet နှင့် API key လိုသည်။\nContent pack: 2026-10-09 · ဥပဒေပညာရှင်စစ်ပြီးသော service မဟုတ်ပါ။ D-2 / D-4 အတိအကျပြောင်းနိုင်မှုကို 1345 ဖြင့် စစ်ပါ။',
+          'KWR Myanmar 0.2.1 Preview · Android 6+\nလက်စွဲ၊ မူရင်း PDF၊ စာရွက်ဖတ်ခြင်း၊ လစာနှင့် milestone တွက်ခြင်းတို့ offline သုံးနိုင်သည်။ AI model အဖြေအသစ်အတွက် internet နှင့် API key လိုသည်။\nContent pack: 2026-10-09 · ဥပဒေပညာရှင်စစ်ပြီးသော service မဟုတ်ပါ။ D-2 / D-4 အတိအကျပြောင်းနိုင်မှုကို 1345 ဖြင့် စစ်ပါ။',
         ),
         TextButton(
           onPressed: () => showLicensePage(
             context: context,
             applicationName: 'KWR Myanmar',
-            applicationVersion: '0.2.0',
+            applicationVersion: '0.2.1',
           ),
           child: const Text('လိုင်စင်များ'),
         ),

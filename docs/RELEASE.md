@@ -1,5 +1,6 @@
-KWR Myanmar 0.2.0 — Korea life handbook for Myanmar speakers.
+KWR Myanmar 0.2.1 — Korea life handbook for Myanmar speakers.
 
+- Header stays visible when switching tabs; search and reading state are preserved.
 - Clean home, handbook, full-text search, saved pages and private files navigation.
 - 55 structured Myanmar guides / 114 sections across 8 categories.
 - 11 offline original sources / 610 searchable pages, including 10 complete PDFs.

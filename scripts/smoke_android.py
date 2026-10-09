@@ -9,7 +9,7 @@ def adb(*args, binary=False):
 
 output=Path('dist/screenshots')
 output.mkdir(parents=True,exist_ok=True)
-adb('install','-r','dist/KWRMyanmar-v0.2.0.apk')
+adb('install','-r','dist/KWRMyanmar-v0.2.1.apk')
 adb('shell','pm','clear','com.myothuonion.kwrmyanmar')
 adb('logcat','-c')
 adb('shell','am','start','-W','-n','com.myothuonion.kwrmyanmar/.MainActivity')
