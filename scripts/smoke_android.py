@@ -9,7 +9,7 @@ def adb(*args, binary=False):
 
 output=Path('dist/screenshots')
 output.mkdir(parents=True,exist_ok=True)
-adb('install','-r','dist/KWRMyanmar-v0.1.0.apk')
+adb('install','-r','dist/KWRMyanmar-v0.2.0.apk')
 adb('shell','pm','clear','com.myothuonion.kwrmyanmar')
 adb('logcat','-c')
 adb('shell','am','start','-W','-n','com.myothuonion.kwrmyanmar/.MainActivity')
@@ -25,8 +25,8 @@ def assert_foreground():
         raise SystemExit('App left the foreground: '+repr(resumed))
 
 assert_foreground()
-for i,name in enumerate(['cards','chat','visa','pay','files']):
-    adb('shell','input','tap',str(round(width*(i+.5)/5)),str(round(height-88*density)))
+for i,name in enumerate(['home','handbook','search','saved','files']):
+    adb('shell','input','tap',str(round(width*(i+.5)/5)),str(round(height-52*density)))
     time.sleep(2)
     assert_foreground()
     (output/f'{name}.png').write_bytes(adb('exec-out','screencap','-p',binary=True))

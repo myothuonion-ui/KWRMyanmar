@@ -1,0 +1,154 @@
+{
+  "sources": [
+    {
+      "id": "workers",
+      "title": "နိုင်ငံခြားသားလုပ်သား လက်စွဲအပြည့်အစုံ",
+      "korean": "외국인근로자 취업",
+      "category": "အလုပ်",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=2042&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/workers.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "888db3b44cf86f29e926a01812ffb2ec00e3b721d35ba8e610594e144253f377",
+      "language": "한국어"
+    },
+    {
+      "id": "wages",
+      "title": "လစာနှင့် မပေးရသေးသောလုပ်ခ",
+      "korean": "임금",
+      "category": "လစာ",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=1694&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/wages.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "a7bf4603f28662694a035b7ae03f11f46a4bcd68c7ff0d148160624fce90c566",
+      "language": "한국어"
+    },
+    {
+      "id": "dismissal",
+      "title": "အလုပ်ထုတ်မှုနှင့် ဖြေရှင်းလမ်းကြောင်း",
+      "korean": "해고근로자",
+      "category": "အလုပ်",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=514&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/dismissal.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "4c68ec8ed9916cb983a26f719aff85abbb6bf76852c9966185c988df07f0c039",
+      "language": "한국어"
+    },
+    {
+      "id": "injury",
+      "title": "လုပ်ငန်းခွင်ဒဏ်ရာနှင့် ရောဂါ",
+      "korean": "산업재해보상보험Ⅰ(업무상 재해)",
+      "category": "အာမခံ",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=570&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/injury.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "8355973b63fb911511ca9c10bf64d186f8bdbacb1314498fc5c1d206b7e078ca",
+      "language": "한국어"
+    },
+    {
+      "id": "benefits",
+      "title": "အလုပ်ဒဏ်ရာအာမခံ ခံစားခွင့်",
+      "korean": "산업재해보상보험Ⅱ(보험급여)",
+      "category": "အာမခံ",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=575&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/benefits.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "312bac6f5e736a478d20a1b0b9711053d340f19179128e84fea8b68ef10a4230",
+      "language": "한국어"
+    },
+    {
+      "id": "housing",
+      "title": "အိမ်ငှားစာချုပ်နှင့် အာမခံငွေ",
+      "korean": "주택임대차",
+      "category": "နေထိုင်မှု",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=629&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/housing.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "98b42f3b414d49761277ed9dbcadd4569d5c9705963686d22ad8e9a55f7fc7e7",
+      "language": "한국어"
+    },
+    {
+      "id": "equality",
+      "title": "လုပ်ငန်းခွင် လိင်ပိုင်းနှောင့်ယှက်မှု",
+      "korean": "성희롱 피해자",
+      "category": "အလုပ်",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=279&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/equality.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "b0933c8cd7edab220f22333fb01f14089844a9b56e4722f4325d2ac98ae3a808",
+      "language": "한국어"
+    },
+    {
+      "id": "contract",
+      "title": "ကာလသတ်မှတ်နှင့် အချိန်ပိုင်းစာချုပ်",
+      "korean": "기간제 및 단시간근로자",
+      "category": "အလုပ်",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=1347&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/contract.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "e158b72213373427618e99cf45a8e99190e277a3fa6e522b72ef746c7e6f680f",
+      "language": "한국어"
+    },
+    {
+      "id": "pension",
+      "title": "နိုင်ငံသားအလိုက် ပင်စင်အကျုံးဝင်မှု",
+      "korean": "외국 연금제도 조사 내용",
+      "category": "အာမခံ",
+      "publisher": "국민연금공단",
+      "url": "https://www.nps.or.kr/html/download/easy/national_join_202502.pdf",
+      "asset": "assets/sources/pension.pdf",
+      "edition": "2025-02-01",
+      "downloaded": "2026-10-09",
+      "sha256": "45982b6a77a4366ba11d60a78b052a66d65eef0abc0ab96e7ae6bb9774e54a08",
+      "language": "한국어"
+    },
+    {
+      "id": "healthrates",
+      "title": "၂၀၂၆ ကျန်းမာရေးအာမခံနှုန်း တရားဝင်ကြေညာချက်",
+      "korean": "2026년도 보험료율 인상 안내",
+      "category": "အာမခံ",
+      "publisher": "국민건강보험공단",
+      "url": "https://edi.nhis.or.kr/portal/images/popup/20251204_pop01longdesc.html",
+      "asset": "",
+      "edition": "2026",
+      "downloaded": "2026-10-09",
+      "language": "한국어",
+      "pages": [
+        "2026년도 보험료율이 인상됨을 안내드립니다.\n직장가입자 건강보험료율: 7.19%(전년대비1.48%인상)\n보수월액보험료(월) = 보수월액 × 보험료율(7.19%)\n※ 가입자 및 사용자 각각 50%씩 부담\n보수 외 소득월액보험료(월) = 보수 외 소득월액 × 보험료율(7.19%)\n지역가입자 재산보험료부과점수당 금액: 211.5원(전년대비1.48%인상)\n지역보험료(월) = [소득월액 × 보험료율(7.19%)] + [재산보험료부과점수 × 재산보험료부과점수당 금액(211.5원)]\n장기요양보험료율: 0.9448%(전년대비2.90%인상)\n장기요양보험료 = 건강보험료 × 장기요양보험료율(0.9448%)/건강보험료율(7.19%)\n외국인 지역가입자 평균보험료: 158,630원(전년대비 3.80% 인상)\n평균보험료 = 건강보험료 140,210원 + 장기요양보험료 18,420원"
+      ]
+    },
+    {
+      "id": "parental",
+      "title": "အမျိုးသမီးလုပ်သားနှင့် မိဘခွင့်",
+      "korean": "여성근로자",
+      "category": "အလုပ်",
+      "publisher": "법제처 · 찾기쉬운 생활법령정보",
+      "url": "https://www.easylaw.go.kr/CSP/FileDownload.laf?csmSeq=1379&flType=pdf&onhunqnaYn=N",
+      "asset": "assets/sources/parental.pdf",
+      "edition": "2026-09-15",
+      "downloaded": "2026-10-09",
+      "sha256": "98fdae10bd4ac5d771660472e8a0d22dee246fa45d43d939039c01663b05f7db",
+      "language": "한국어"
+    }
+  ],
+  "font": {
+    "url": "https://raw.githubusercontent.com/google/fonts/main/ofl/notosansmyanmar/NotoSansMyanmar%5Bwdth,wght%5D.ttf",
+    "asset": "assets/fonts/NotoSansMyanmar.ttf",
+    "sha256": "7abbbfbe2514105d7ce94937aee3feb2ba89b73a256c8b77b5866bd9b83e32ec"
+  }
+}

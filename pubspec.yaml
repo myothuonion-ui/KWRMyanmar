@@ -1,7 +1,7 @@
 name: kwrmyanmar
 description: Offline Korean worker rights and personal-context AI for Myanmar speakers.
 publish_to: none
-version: 0.1.0+1
+version: 0.2.0+2
 environment:
   sdk: '>=3.9.0 <4.0.0'
 dependencies:
@@ -25,3 +25,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/cards.json
+    - assets/sources.json
+    - assets/sources/
+  fonts:
+    - family: NotoSansMyanmar
+      fonts:
+        - asset: assets/fonts/NotoSansMyanmar.ttf

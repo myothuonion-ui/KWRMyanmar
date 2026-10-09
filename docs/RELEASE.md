@@ -1,12 +1,20 @@
-KWR Myanmar 0.1.0 is an Android preview for Myanmar-speaking workers in Korea.
+KWR Myanmar 0.2.0 — Korea life handbook for Myanmar speakers.
 
-- Offline source-linked cards, search, bookmarks and guided dismissal questions.
-- Calendar-month job-change milestones and pay estimates with visible assumptions.
-- Gemini, OpenAI Responses, Claude, NVIDIA NIM, DeepSeek and custom OpenAI-compatible chat.
-- Per-provider user-owned API keys, live model-list refresh and custom model IDs.
-- Encrypted personal profile, imported files, confirmed OCR/PDF text and chat snapshots.
-- Explicit context preview before any private text is sent to an AI provider.
+- Clean home, handbook, full-text search, saved pages and private files navigation.
+- 55 structured Myanmar guides / 114 sections across 8 categories.
+- 11 offline original sources / 610 searchable pages, including 10 complete PDFs.
+- Burmese/Korean/English aliases, original-page search and direct page opening.
+- Original PDF and selectable-text reading modes, page bookmarks, contents and text size controls.
+- Detailed social/EPS insurance guides with payers, claims, record checks and dated official rates.
+- Existing private-file encryption, local Korean/Latin OCR, pay/visa tools and all AI providers retained.
 
-This preview uses a development signing identity. Source summaries are not a lawyer-reviewed comprehensive legal corpus. D-2/D-4-specific change rules remain marked for current official verification. Online AI needs a supported model and the user's API key/credits. API formats are covered by mock-response tests; no user's paid key is included or used in CI.
+Android 6.0+. No account or API key needed for handbook/search/source reading.
+Online AI needs the user's provider key, credits and supported model. Model lists
+can be refreshed per provider or model IDs entered manually. No paid key is
+included or used by tests.
 
-Android 6.0 or later. Korean/Latin image OCR is bundled; Burmese image OCR is not supported. Import text may require manual correction before confirmation.
+This is a public **preview APK with a development signing identity**, not a Play
+Store production release. It is not a comprehensive lawyer-reviewed legal corpus.
+Korean source snapshots have their own edition dates; the pension country table
+is from 2025-02-01. Pending visa/benefit details stay visibly marked. Myanmar
+explanations are not official translations. Entire linked websites are not bundled.

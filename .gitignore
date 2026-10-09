@@ -9,3 +9,10 @@ android/local.properties
 .env*
 coverage/
 private/
+# Reproduced and hash-verified by scripts/build_sources.py before every build.
+assets/sources/
+assets/sources.json
+assets/fonts/*.ttf
+
+__pycache__/
+*.pyc
