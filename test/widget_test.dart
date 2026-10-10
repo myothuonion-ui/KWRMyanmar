@@ -161,6 +161,7 @@ void main() {
       expect(state.history.single['answer'], contains('원문전용고유문구'));
       final link = find.text('Original test · စာမျက်နှာ 2');
       await tester.ensureVisible(link);
+      await tester.pumpAndSettle();
       await tester.tap(link);
       await tester.pumpAndSettle();
       expect(find.text('စာမျက်နှာ 2 / 2'), findsOneWidget);

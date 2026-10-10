@@ -136,7 +136,7 @@ String foldSearch(String text) {
 String searchExcerpt(String text, List<String> terms) {
   final lines = text.split(RegExp(r'\n+|။'));
   for (final line in lines) {
-    if (line.trim().length > 16 &&
+    if (line.trim().isNotEmpty &&
         terms.any((t) => foldSearch(line).contains(t))) {
       final clean = line.trim();
       return clean.length > 240 ? '${clean.substring(0, 240)}…' : clean;
