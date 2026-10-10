@@ -8,8 +8,8 @@ Android app for Myanmar-speaking workers in Korea. Read structured Myanmar guide
 - **Sources:** 11 offline documents / 610 searchable pages, including 10 complete official PDFs. Text/PDF modes, source editions, direct page navigation and page bookmarks. See [source attribution](docs/SOURCE_LICENSES.md).
 - **Search:** Entire guide bodies/sections and every original page; Burmese/Korean/English aliases, source-only filtering, excerpts and exact-page opening.
 - **Design:** Calm green/navy surfaces, bundled Noto Myanmar, readable spacing, contents navigation and adjustable guide text. Five tabs: Home, Handbook, Search, Saved and My files.
-- **AI:** Offline source search or online Gemini, OpenAI Responses, Claude, NVIDIA NIM, DeepSeek and custom OpenAI-compatible chat.
-- **Models:** Per-provider keys and model preferences; fetch model IDs from each API or enter a custom ID. No embedded key or fixed model list.
+- **AI:** Offline answers search guides and original pages; online answers receive the same dated evidence with exact-page citations and a reviewable send preview. Supports Gemini, OpenAI Responses, Claude, NVIDIA NIM, DeepSeek and custom OpenAI-compatible chat.
+- **Models:** Per-provider keys and model preferences; drafts survive provider switching and are saved together; fetch model IDs from each API or enter a custom ID. No embedded key or fixed model list.
 - **Visa:** Separate termination, workplace-change application and official deadline dates; calendar-month milestones. D-2/D-4 eligibility stays marked for current official verification.
 - **Pay:** Ordinary hourly wage, non-overlapping work hours, overlapping night premiums, holiday premiums, manual deductions and payslip comparison. Applicability must be confirmed.
 - **My files:** PDF/JPG/PNG import, local PDF extraction, bundled Korean/Latin OCR, editable confirmed text, profile, events and explicit AI-context selection.
@@ -32,7 +32,7 @@ Private records, originals and history snapshots are encrypted locally with AES-
 
 Only confirmed, selected context appears in the request preview. Original PDF/images and old chat snapshots are not sent automatically. Common IDs, long numeric identifiers and emails are masked, but users must still remove other private details manually. Export deliberately writes readable JSON without original attachments or API keys. Uninstall/app-data clearing may lose local records.
 
-Source snapshots were collected on **2026-10-09**; each source retains its actual edition date; they are not a comprehensive lawyer-reviewed corpus. AI citations are restricted to retrieved card IDs, which does not prove that every generated claim is correct. Verify unresolved rules with official sources, 1350 (labor) or 1345 (immigration). Imported contracts are personal evidence, not statutes.
+Source snapshots were collected on **2026-10-09**; each source retains its actual edition date; they are not a comprehensive lawyer-reviewed corpus. AI citations are restricted to retrieved guide IDs and exact original-page IDs, which does not prove that every generated claim is correct. Verify unresolved rules with official sources, 1350 (labor) or 1345 (immigration). Imported contracts are personal evidence, not statutes.
 
 ## Build and verification
 

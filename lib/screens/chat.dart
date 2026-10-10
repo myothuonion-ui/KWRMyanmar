@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../core/ai_service.dart';
+import '../core/ai_evidence.dart';
 import '../core/app_state.dart';
 import '../core/context.dart';
 import '../core/models.dart';
 import '../core/rules.dart' show maskPrivateText;
 import 'settings.dart';
 import 'widgets.dart';
+import 'source_reader.dart';
 
 class ChatScreen extends StatefulWidget {
   final AppState state;
@@ -44,7 +46,6 @@ class ChatScreenState extends State<ChatScreen> {
     String personal,
     ProviderConfig provider,
     String model,
-    List<LegalCard> sources,
   ) async {
     final question = TextEditingController(text: maskPrivateText(query));
     final contextInput = TextEditingController(text: personal);
@@ -66,15 +67,37 @@ class ChatScreenState extends State<ChatScreen> {
                     context,
                     'အောက်ပါမေးခွန်းနှင့် context ကို provider ထံ ပို့မည်။ ID / account / email အချို့ဖျောက်ထားသော်လည်း အမည်၊ လိပ်စာနှင့် အခြားကိုယ်ရေးအချက်များကို ထပ်စစ်ဖယ်ပါ။ API provider ၏ data policy သက်ဆိုင်သည်။',
                   ),
-                  field('မေးခွန်း · ပြင်နိုင်သည်', question, lines: 3),
+                  TextField(
+                    controller: question,
+                    minLines: 2,
+                    maxLines: 4,
+                    onChanged: (_) => setDialog(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'မေးခွန်း · ပြင်နိုင်သည်',
+                    ),
+                  ),
                   field(
                     'ရွေးထားသော context · မလိုတာဖယ်နိုင်သည်',
                     contextInput,
                     lines: 8,
                   ),
+                  ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: const Text('ပို့မည့် လက်စွဲနှင့် မူရင်းစာသား'),
+                    children: [
+                      for (final source in retrieveEvidence(
+                        widget.state.index,
+                        question.text,
+                      ))
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: SelectableText(source.evidence),
+                        ),
+                    ],
+                  ),
                   note(
                     context,
-                    'Public source cards: ${sources.map((s) => s.title).join('၊ ')}\nမူရင်း PDF / ပုံ မပို့ပါ။ အရင် chat ထဲက context ကိုလည်း အလိုအလျောက်မပို့ပါ။',
+                    'သက်ဆိုင်ရာ လက်စွဲနှင့် မူရင်းစာမျက်နှာမှ စာသားကိုသာ ပို့မည်။ မူရင်း PDF / ပုံနှင့် အရင် chat context ကို အလိုအလျောက်မပို့ပါ။',
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
@@ -127,17 +150,14 @@ class ChatScreenState extends State<ChatScreen> {
     final state = widget.state;
     final query = input.text.trim();
     final online = state.settings['online'] == true;
-    final sources = state.index
-        .search(query, kind: 'guides', limit: 6)
-        .map((h) => h.guide!)
-        .toList();
+    var sources = retrieveEvidence(state.index, query);
     final token = ++generation;
     setState(() => busy = true);
     try {
       if (!online) {
         final answer = sources.isEmpty
             ? 'ထည့်ထားသော offline sources ထဲတွင် တိုက်ရိုက်သက်ဆိုင်သောအချက် မတွေ့သေးပါ။ ပိုတိုသောစကားလုံးဖြင့် ရှာပါ။ လိုအပ်သည့်ရင်းမြစ်ကို official website / 1350 / 1345 ဖြင့်စစ်ပါ။'
-            : 'သက်ဆိုင်သော offline လက်စွဲအနှစ်ချုပ်များကို အောက်တွင်ပြထားသည်။ ကိုယ့်အမှုအတွက် အတည်ပြုဆုံးဖြတ်ချက်မဟုတ်ပါ။\n\n${sources.take(3).map((s) => '${s.title}\n${s.summary}').join('\n\n')}';
+            : 'သက်ဆိုင်သော offline လက်စွဲနှင့် မူရင်းစာသားများကို အောက်တွင်ပြထားသည်။ မူရင်းကိုရီးယားစာသားကို Online AI ဖြင့် မြန်မာလို မေးနိုင်သည်။\n\n${sources.map((s) => '${s.title}\n${s.guide?.summary ?? s.excerpt}').join('\n\n')}';
         await state.addHistory({
           'date': DateTime.now().toIso8601String(),
           'question': query,
@@ -163,12 +183,13 @@ class ChatScreenState extends State<ChatScreen> {
           useProfile: state.settings['profileContext'] == true,
           documents: state.documents,
         );
-        final consent = await preview(query, personal, p, model, sources);
+        final consent = await preview(query, personal, p, model);
         if (consent == null ||
             !mounted ||
             token != generation ||
             state.settings['online'] != true)
           return;
+        sources = retrieveEvidence(state.index, consent['question']!);
         service = AiService();
         final raw = await service!.chat(
           provider: p,
@@ -237,7 +258,12 @@ class ChatScreenState extends State<ChatScreen> {
 
   Widget turn(Map<String, dynamic> row) {
     final ids = List<String>.from(row['source_ids'] ?? []);
-    final sources = widget.state.cards.where((c) => ids.contains(c.id));
+    final sources = ids
+        .map(
+          (id) => resolveEvidence(id, widget.state.cards, widget.state.sources),
+        )
+        .whereType<PublicEvidence>()
+        .toList();
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       child: Padding(
@@ -275,7 +301,13 @@ class ChatScreenState extends State<ChatScreen> {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => CardDetail(widget.state, c, setQuestion),
+                    builder: (_) => c.guide != null
+                        ? CardDetail(widget.state, c.guide!, setQuestion)
+                        : SourceReader(
+                            widget.state,
+                            c.source!,
+                            initialPage: c.page!,
+                          ),
                   ),
                 ),
                 icon: const Icon(Icons.link, size: 18),
@@ -312,7 +344,12 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: widget.state,
+    builder: (context, _) => buildContent(context),
+  );
+
+  Widget buildContent(BuildContext context) {
     final state = widget.state;
     final online = state.settings['online'] == true;
     final provider = providers.firstWhere(

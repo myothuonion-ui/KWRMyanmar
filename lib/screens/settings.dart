@@ -23,6 +23,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late String providerId;
   List<String> models = [];
   bool busy = false, hidden = true;
+  bool loaded = false;
+  final keyDrafts = <String, String>{};
+  final configDrafts = <String, Map<String, dynamic>>{};
   AiService? service;
   ProviderConfig get provider =>
       providers.firstWhere((p) => p.id == providerId);
@@ -33,11 +36,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
     load(providerId);
   }
 
+  void remember() {
+    if (!loaded) return;
+    keyDrafts[providerId] = keyInput.text.trim();
+    configDrafts[providerId] = {
+      'model': model.text.trim(),
+      'models': List<String>.from(models),
+      'base': base.text.trim(),
+    };
+  }
+
   Future<void> load(String id) async {
+    remember();
     setState(() => busy = true);
     try {
-      final stored = widget.state.providerSettings(id);
-      final key = await widget.state.vault.keyFor(id);
+      final stored = configDrafts[id] ?? widget.state.providerSettings(id);
+      final key = keyDrafts[id] ?? await widget.state.vault.keyFor(id);
       if (!mounted) return;
       setState(() {
         providerId = id;
@@ -46,6 +60,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         models = List<String>.from(stored['models'] ?? []);
         base.text =
             stored['base'] ?? providers.firstWhere((p) => p.id == id).baseUrl;
+        loaded = true;
       });
     } catch (e) {
       if (mounted) message(context, e.toString());
@@ -55,20 +70,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> save() async {
-    if (providerId == 'custom') {
+    remember();
+    final custom = configDrafts['custom'];
+    if (custom != null &&
+        ((custom['base'] as String).isNotEmpty ||
+            (custom['model'] as String).isNotEmpty ||
+            (keyDrafts['custom'] ?? '').isNotEmpty)) {
       final validator = AiService();
       try {
-        validator.endpoint(base.text.trim(), 'models');
+        validator.endpoint(custom['base'], 'models');
       } finally {
         validator.close();
       }
     }
-    await widget.state.vault.setKey(providerId, keyInput.text.trim());
-    await widget.state.setProvider(providerId, {
-      'model': model.text.trim(),
-      'models': models,
-      'base': base.text.trim(),
-    });
+    for (final entry in configDrafts.entries) {
+      await widget.state.vault.setKey(entry.key, keyDrafts[entry.key]!);
+      await widget.state.setProvider(entry.key, entry.value);
+    }
     await widget.state.setSetting('provider', providerId);
   }
 
@@ -83,11 +101,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
       if (!mounted) return;
       setState(() => models = found);
-      await save();
+      remember();
       if (mounted)
         message(
           context,
-          '${found.length} models ရပါပြီ။ Chat အတွက် model ကို ရွေးပါ။',
+          '${found.length} models ရပါပြီ။ Model ရွေးပြီး ရွေးချယ်မှုများကို သိမ်းပါ။',
         );
     } catch (e) {
       if (mounted) message(context, e.toString());
@@ -217,6 +235,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (accepted != true) return;
     await widget.state.reset();
     if (mounted) {
+      loaded = false;
+      keyDrafts.clear();
+      configDrafts.clear();
       await load('gemini');
       if (mounted) message(context, 'ကိုယ်ရေးဒေတာဖျက်ပြီးပြီ။');
     }
@@ -241,7 +262,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
           context,
           'API key ကို provider ဆီ request ပို့ရန်သာ သုံးသည်။ ဖုန်း၏ secure storage တွင် သိမ်းသည်။ Provider ၏ usage charges / quota သက်ဆိုင်သည်။',
         ),
+        note(
+          context,
+          'Provider တစ်ခုချင်းစီအတွက် ကိုယ့် API key / model ကိုထည့်ပါ။ Provider ပြောင်းလည်း ထည့်ထားသောစာသား မပျောက်ပါ။ ပြင်ပြီးလျှင် အောက်မှ ရွေးချယ်မှုများကို သိမ်းပါ။',
+        ),
         DropdownButtonFormField<String>(
+          key: const ValueKey('provider-picker'),
           value: providerId,
           isExpanded: true,
           decoration: const InputDecoration(
@@ -255,13 +281,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 12),
         TextField(
+          key: const ValueKey('api-key'),
           controller: keyInput,
+          enabled: !busy,
           obscureText: hidden,
+          autocorrect: false,
+          enableSuggestions: false,
           decoration: InputDecoration(
             labelText: 'API key',
             border: const OutlineInputBorder(),
             suffixIcon: IconButton(
-              onPressed: () => setState(() => hidden = !hidden),
+              onPressed: busy ? null : () => setState(() => hidden = !hidden),
               icon: Icon(
                 hidden
                     ? Icons.visibility_outlined
@@ -289,12 +319,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onPressed: busy ? null : chooseModel,
             child: Text('Model စာရင်း ${models.length} ခုထဲမှ ရွေးမယ်'),
           ),
-        field('Model ID · ရွေးနိုင် / ကိုယ်တိုင်ထည့်နိုင်', model),
+        TextField(
+          key: const ValueKey('model-id'),
+          controller: model,
+          enabled: !busy,
+          autocorrect: false,
+          enableSuggestions: false,
+          decoration: const InputDecoration(
+            labelText: 'Model ID · ရွေးနိုင် / ကိုယ်တိုင်ထည့်နိုင်',
+          ),
+        ),
         note(
           context,
           'Model စာရင်းတွင် chat မပံ့ပိုးသော model များလည်း ရှိနိုင်သည်။ ကိုယ့် API account တွင် အသုံးပြုခွင့်ရှိသော chat model ကိုရွေးပါ။',
         ),
         FilledButton.icon(
+          key: const ValueKey('save-providers'),
           onPressed: busy
               ? null
               : () async {
@@ -302,7 +342,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   try {
                     await save();
                     if (context.mounted)
-                      message(context, 'Provider / key / model သိမ်းပြီးပြီ။');
+                      message(
+                        context,
+                        'Provider တစ်ခုချင်းစီ၏ key / model သိမ်းပြီးပြီ။',
+                      );
                   } catch (e) {
                     if (context.mounted) message(context, e.toString());
                   } finally {
@@ -310,7 +353,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }
                 },
           icon: const Icon(Icons.save_outlined),
-          label: const Text('ရွေးချယ်မှုကို သိမ်းမယ်'),
+          label: const Text('ရွေးချယ်မှုများကို သိမ်းမယ်'),
         ),
         const Divider(height: 32),
         sectionTitle(context, 'ကိုယ်ရေးဒေတာ'),
@@ -331,13 +374,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const Divider(height: 28),
         note(
           context,
-          'KWR Myanmar 0.2.1 Preview · Android 6+\nလက်စွဲ၊ မူရင်း PDF၊ စာရွက်ဖတ်ခြင်း၊ လစာနှင့် milestone တွက်ခြင်းတို့ offline သုံးနိုင်သည်။ AI model အဖြေအသစ်အတွက် internet နှင့် API key လိုသည်။\nContent pack: 2026-10-09 · ဥပဒေပညာရှင်စစ်ပြီးသော service မဟုတ်ပါ။ D-2 / D-4 အတိအကျပြောင်းနိုင်မှုကို 1345 ဖြင့် စစ်ပါ။',
+          'KWR Myanmar 0.2.2 Preview · Android 6+\nလက်စွဲ၊ မူရင်း PDF၊ စာရွက်ဖတ်ခြင်း၊ လစာနှင့် milestone တွက်ခြင်းတို့ offline သုံးနိုင်သည်။ AI model အဖြေအသစ်အတွက် internet နှင့် API key လိုသည်။\nContent pack: 2026-10-09 · ဥပဒေပညာရှင်စစ်ပြီးသော service မဟုတ်ပါ။ D-2 / D-4 အတိအကျပြောင်းနိုင်မှုကို 1345 ဖြင့် စစ်ပါ။',
         ),
         TextButton(
           onPressed: () => showLicensePage(
             context: context,
             applicationName: 'KWR Myanmar',
-            applicationVersion: '0.2.1',
+            applicationVersion: '0.2.2',
           ),
           child: const Text('လိုင်စင်များ'),
         ),

@@ -15,13 +15,19 @@ import 'package:kwrmyanmar/main.dart';
 import 'package:kwrmyanmar/screens/chat.dart';
 import 'package:kwrmyanmar/screens/source_reader.dart';
 import 'package:kwrmyanmar/screens/widgets.dart';
+import 'package:kwrmyanmar/screens/settings.dart';
 
 class MemoryVault extends Vault {
   MemoryVault(super.secure, super.directory, super.cipher);
+  final keys = <String, String>{};
   @override
   Future<void> save(Map<String, dynamic> state) async {}
   @override
-  Future<String> keyFor(String provider) async => '';
+  Future<String> keyFor(String provider) async => keys[provider] ?? '';
+  @override
+  Future<void> setKey(String provider, String value) async {
+    keys[provider] = value;
+  }
 }
 
 Future<AppState> makeState() async {
@@ -54,6 +60,116 @@ Future<AppState> makeState() async {
 }
 
 void main() {
+  testWidgets(
+    'provider drafts survive switching and save separately for all five APIs',
+    (tester) async {
+      tester.view.physicalSize = const Size(1280, 2400);
+      tester.view.devicePixelRatio = 2;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final state = await makeState();
+      await tester.pumpWidget(MaterialApp(home: SettingsScreen(state)));
+      await tester.pumpAndSettle();
+      Future<void> choose(String label) async {
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('provider-picker')),
+        );
+        await tester.tap(find.byKey(const ValueKey('provider-picker')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text(label).last);
+        await tester.pumpAndSettle();
+      }
+
+      for (final provider in providers.where((p) => p.id != 'custom')) {
+        if (provider.id != 'gemini') await choose(provider.label);
+        await tester.enterText(
+          find.byKey(const ValueKey('api-key')),
+          'TEST_${provider.id}',
+        );
+        await tester.enterText(
+          find.byKey(const ValueKey('model-id')),
+          'model-${provider.id}',
+        );
+      }
+      await choose('Gemini');
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('api-key')))
+            .controller!
+            .text,
+        'TEST_gemini',
+      );
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('model-id')))
+            .controller!
+            .text,
+        'model-gemini',
+      );
+      await tester.ensureVisible(find.byKey(const ValueKey('save-providers')));
+      await tester.tap(find.byKey(const ValueKey('save-providers')));
+      await tester.pumpAndSettle();
+      for (final provider in providers.where((p) => p.id != 'custom')) {
+        expect(await state.vault.keyFor(provider.id), 'TEST_${provider.id}');
+        expect(
+          state.providerSettings(provider.id)['model'],
+          'model-${provider.id}',
+        );
+      }
+      expect(state.settings['provider'], 'gemini');
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      state.dispose();
+    },
+  );
+
+  testWidgets(
+    'chat mode and saved provider update immediately; original-only offline result opens page',
+    (tester) async {
+      final base = await makeState();
+      const source = SourceDocument(
+        id: 'only',
+        title: 'Original test',
+        korean: '원문',
+        category: 'အလုပ်',
+        publisher: 'test',
+        url: 'https://example.org',
+        asset: '',
+        edition: '2025',
+        downloaded: '2026',
+        pages: ['첫페이지', '원문전용고유문구 신청 절차'],
+      );
+      final state = AppState(base.vault, [], base.data, sources: [source]);
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: ChatScreen(state))),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pumpAndSettle();
+      expect(find.text('Online AI · Gemini'), findsOneWidget);
+      await state.setProvider('claude', {'model': 'claude-test'});
+      await state.setSetting('provider', 'claude');
+      await tester.pumpAndSettle();
+      expect(find.text('Online AI · Claude'), findsOneWidget);
+      expect(find.text('Model: claude-test'), findsOneWidget);
+      await tester.tap(find.byType(SwitchListTile));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '원문전용고유문구');
+      await tester.tap(find.byTooltip('မေးမယ်'));
+      await tester.pumpAndSettle();
+      expect(state.history.single['source_ids'], ['src:only:2']);
+      expect(state.history.single['answer'], contains('원문전용고유문구'));
+      final link = find.text('Original test · စာမျက်နှာ 2');
+      await tester.ensureVisible(link);
+      await tester.tap(link);
+      await tester.pumpAndSettle();
+      expect(find.text('စာမျက်နှာ 2 / 2'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      base.dispose();
+      state.dispose();
+    },
+  );
   testWidgets('five handbook tabs, source search and bookmarks work offline', (
     tester,
   ) async {
