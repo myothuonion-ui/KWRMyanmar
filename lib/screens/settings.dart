@@ -175,7 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('ဒေတာ export'),
         content: const Text(
-          'Profile၊ စစ်ပြီးစာသား၊ chat history နဲ့ event များကို ဖတ်လို့ရသော JSON ဖိုင်အဖြစ် သိမ်းမည်။ မူရင်း PDF/ပုံနှင့် API key မပါပါ။ ဖိုင်ကို ကိုယ်တိုင်လုံခြုံစွာထားပါ။',
+          'Profile၊ စစ်ပြီးစာသား၊ chat history၊ မှတ်စု၊ စစ်စာရင်းနှင့် event များကို ဖတ်လို့ရသော JSON ဖိုင်အဖြစ် သိမ်းမည်။ မူရင်း PDF/ပုံနှင့် API key မပါပါ။ ဖိုင်ကို ကိုယ်တိုင်လုံခြုံစွာထားပါ။',
         ),
         actions: [
           TextButton(
@@ -192,13 +192,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (accepted != true) return;
     try {
       final data = {
-        'version': 1,
+        'version': 2,
         'exported': DateTime.now().toIso8601String(),
         'profile': widget.state.profile,
         'documents': widget.state.documents.map((d) => d.toJson()).toList(),
         'history': widget.state.history,
         'events': widget.state.events,
         'bookmarks': widget.state.bookmarks,
+        'guide_notes': widget.state.data['guide_notes'] ?? {},
+        'guide_progress': widget.state.data['guide_progress'] ?? {},
       };
       final uri = await FilePicker.saveFile(
         fileName: 'KWRMyanmar-data.json',
@@ -218,7 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (context) => AlertDialog(
         title: const Text('ဒေတာအားလုံး ဖျက်မလား?'),
         content: const Text(
-          'ဤဖုန်းပေါ်ရှိ profile၊ တင်ထားသောစာရွက်၊ chat history၊ bookmarks နဲ့ API keys အားလုံးဖျက်မည်။ ပြန်ယူ၍မရပါ။',
+          'ဤဖုန်းပေါ်ရှိ profile၊ တင်ထားသောစာရွက်၊ chat history၊ မှတ်စု၊ စစ်စာရင်း၊ bookmarks နဲ့ API keys အားလုံးဖျက်မည်။ ပြန်ယူ၍မရပါ။',
         ),
         actions: [
           TextButton(

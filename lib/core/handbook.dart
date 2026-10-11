@@ -60,15 +60,38 @@ const searchAliases = [
     'လစာမရ',
     'လစာကျန်',
     'လစာနောက်ကျ',
+    'လစာမရှင်း',
+    'လခမရ',
+    'ပိုက်ဆံမရှင်း',
+    'ပိုက်ဆံမပေး',
+    'ငွေမရှင်း',
+    'လုပ်အားခမရ',
     'လုပ်ခမပေး',
     'လုပ်ခကျန်',
     '임금체불',
     '체불임금',
     'unpaid wages',
   ],
-  ['အလုပ်ထုတ်', 'ထုတ်ခံရ', 'အလုပ်ဖြုတ်', '해고', 'dismissal', 'fired'],
+  [
+    'အလုပ်ထုတ်',
+    'ထုတ်ခံရ',
+    'အလုပ်ဖြုတ်',
+    'ထုတ်လိုက်',
+    'ဖြုတ်လိုက်',
+    'အလုပ်မလာနဲ့',
+    '해고',
+    'dismissal',
+    'fired',
+  ],
   ['အလုပ်ထွက်', 'အလုပ်ကထွက်', '퇴직', '사직', 'resign'],
-  ['အလုပ်ပြောင်း', '사업장 변경', '근무처 변경', 'workplace change'],
+  [
+    'အလုပ်ပြောင်း',
+    'စက်ရုံပြောင်း',
+    'အလုပ်ရုံပြောင်း',
+    '사업장 변경',
+    '근무처 변경',
+    'workplace change',
+  ],
   ['အချိန်ပို', '연장근로', '초과근로', 'overtime'],
   ['ညဆိုင်း', 'ညအလုပ်', 'ညကြေး', '야간근로', 'night shift'],
   ['ပိတ်ရက်', '휴일', 'holiday'],
@@ -109,7 +132,9 @@ const searchAliases = [
   ['အာမခံငွေ', 'စပေါ်ငွေ', '보증금', 'deposit'],
   ['လိပ်စာပြောင်း', '체류지 변경', '주소', 'address change'],
   ['နေထိုင်ခွင့်ကတ်', '외국인등록', 'residence card', 'arc'],
-  ['ဗီဇာ', 'visa', '체류자격', 'e9', 'e-9', 'e7', 'e-7'],
+  ['ဗီဇာ', 'visa', '체류자격'],
+  ['e9', 'e-9'],
+  ['e7', 'e-7'],
   ['အခွန်', '세금', '연말정산', 'tax'],
   ['နှိပ်စက်', 'အနိုင်ကျင့်', '괴롭힘', 'harassment'],
   ['လိင်ပိုင်း', '성희롱', 'sexual harassment'],
@@ -120,6 +145,78 @@ const searchAliases = [
   ['ငွေလွှဲ', '송금', 'remittance'],
   ['အရေးပေါ်', '긴급', 'emergency'],
 ];
+
+// Intent hints rank the problem above broad words such as E-9 or insurance.
+// These affect retrieval only; eligibility is established by dated evidence.
+const _intentHints = <String, List<String>>{
+  'unpaid': [
+    'လစာမပေး',
+    'လစာမရ',
+    'လစာကျန်',
+    'လစာမရှင်း',
+    'လခမရ',
+    'ပိုက်ဆံမရှင်း',
+    'ပိုက်ဆံမပေး',
+    'ငွေမရှင်း',
+    'လုပ်အားခမရ',
+    '임금체불',
+    'unpaidwages',
+  ],
+  'change1month': [
+    'အလုပ်ပြောင်း',
+    'စက်ရုံပြောင်း',
+    'အလုပ်ရုံပြောင်း',
+    '사업장변경',
+    'workplacechange',
+  ],
+  'dismissal20': [
+    'အလုပ်ထုတ်',
+    'ထုတ်ခံရ',
+    'ထုတ်လိုက်',
+    'ဖြုတ်လိုက်',
+    'အလုပ်မလာနဲ့',
+    '해고',
+    'dismissal',
+    'fired',
+  ],
+  'injury_claim': ['စက်ထိ', 'အလုပ်ဒဏ်ရာ', 'အလုပ်မှာဒဏ်ရာ', '산재', 'workinjury'],
+  'clinic_visit': ['ဆေးခန်း', 'ဆေးရုံ', 'ဆေးကုသ', '병원'],
+  'nightpay': ['ညဆိုင်း', 'ညကြေး', '야간근로', 'nightshift'],
+  'overtime': ['အချိန်ပို', '연장근로', 'overtime'],
+  'departure_insurance': ['ထွက်ခွာအာမခံ', '출국만기보험'],
+  'return_insurance': ['နေရပ်ပြန်စရိတ်', 'ပြန်ခရီးစရိတ်', '귀국비용보험'],
+  'wage_guarantee': ['မပေးသောလစာအာမခံ', '임금체불보증보험'],
+  'accident_insurance': ['ထိခိုက်မှုအာမခံ', '상해보험'],
+  'pension': ['ပင်စင်', '국민연금', 'pension'],
+  'tax': ['အခွန်', '연말정산', 'tax'],
+  'deposit_return': ['စပေါ်ငွေပြန်မရ', '보증금반환'],
+  'annual_leave': ['ခွင့်ရက်', '연차', 'annualleave'],
+  'resignation': ['အလုပ်ထွက်', '퇴직', '사직', 'resign'],
+  'extension': ['ဗီဇာသက်တမ်း', '체류기간연장', 'visaextension'],
+  'healthinsurance': ['ကျန်းမာရေးအာမခံ', '건강보험', 'healthinsurance'],
+  'longterm': ['ရေရှည်စောင့်ရှောက်', '장기요양', 'longtermcare'],
+  'payslip': ['လစာစာရွက်', '임금명세서', '급여명세서', 'payslip'],
+  'dorm': ['အဆောင်ခ', '기숙사비'],
+  'hours': ['နားချိန်', 'လုပ်ချိန်', '휴게시간', '근로시간'],
+  'weekly_holiday': ['အပတ်စဉ်ပိတ်ရက်', '주휴수당'],
+  'minimum2026': ['အနည်းဆုံးလစာ', '최저임금', 'minimumwage'],
+  'unemployment': ['အလုပ်လက်မဲ့', '실업급여', 'unemployment'],
+  'bank': ['ဘဏ်အကောင့်', '은행', 'bankaccount'],
+  'remittance': ['ငွေလွှဲ', '송금', 'remittance'],
+  'scams': ['လိမ်လည်', '보이스피싱', 'scam'],
+  'sexual_harassment': ['လိင်ပိုင်း', '성희롱', 'sexualharassment'],
+  'harassment': ['အနိုင်ကျင့်', '괴롭힘', 'bullying'],
+};
+
+Set<String> searchIntents(String query) {
+  final q = foldSearch(query);
+  return {
+    for (final e in _intentHints.entries)
+      if (e.value.any((t) => q.contains(foldSearch(t)))) e.key,
+  };
+}
+
+bool hasSpecificSearchIntent(String query) => searchIntents(query).isNotEmpty;
 
 String foldSearch(String text) {
   var value = text
@@ -170,7 +267,7 @@ class HandbookIndex {
           title: foldSearch('${g.title} ${g.tags.join(' ')}'),
           body: foldSearch(g.searchText),
           original:
-              '${g.summary}\n${g.body}\n${g.sections.map((s) => s.text).join('\n')}',
+              '${g.summary}\n${g.body}\n${g.sections.map((s) => s.text).join('\n')}\n${g.procedure.text}',
         ),
       for (final s in sources)
         for (var i = 0; i < s.pages.length; i++)
@@ -203,6 +300,7 @@ class HandbookIndex {
       }
     }
     final terms = {...direct, ...expanded}.toList();
+    final intents = searchIntents(query);
     final hits = <SearchHit>[];
     for (final r in records) {
       if (kind == 'guides' && r.guide == null ||
@@ -212,6 +310,10 @@ class HandbookIndex {
           (r.guide?.category ?? r.source?.category) != category)
         continue;
       var score = 0.0;
+      if (r.guide != null && intents.contains(r.guide!.id)) score += 120;
+      if (r.guide != null &&
+          r.guide!.questionAliases.any((a) => q.contains(foldSearch(a))))
+        score += 80;
       if (r.title.contains(q)) score += 150;
       if (r.body.contains(q)) score += 25;
       for (final t in terms) {

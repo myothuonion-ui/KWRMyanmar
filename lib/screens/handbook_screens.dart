@@ -359,7 +359,12 @@ class SavedScreen extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: state,
     builder: (context, _) {
-      final guides = state.cards.where((g) => state.bookmarks.contains(g.id));
+      final guides = state.cards.where(
+        (g) =>
+            state.bookmarks.contains(g.id) ||
+            state.guideNote(g.id).isNotEmpty ||
+            state.completedGuideSteps(g.id).isNotEmpty,
+      );
       final pages = state.bookmarks.where((b) => b.startsWith('src:'));
       return ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -370,7 +375,7 @@ class SavedScreen extends StatelessWidget {
           ),
           note(
             context,
-            'လက်စွဲနဲ့ မူရင်းစာမျက်နှာကို bookmark လုပ်ပြီး ဒီနေရာမှာ အလွယ်တကူပြန်ဖတ်ပါ။',
+            'Bookmark၊ ကိုယ့်မှတ်စုနှင့် လုပ်ပြီးသော စစ်စာရင်းရှိသည့် လက်စွဲများကို ဒီနေရာမှာ ပြန်ဖတ်နိုင်သည်။',
           ),
           if (guides.isEmpty && pages.isEmpty)
             const EmptyPanel(

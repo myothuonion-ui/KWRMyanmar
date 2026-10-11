@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:kwrmyanmar/core/ai_service.dart';
 import 'package:kwrmyanmar/core/app_state.dart';
 import 'package:kwrmyanmar/core/handbook.dart';
 import 'package:kwrmyanmar/core/models.dart';
@@ -60,6 +63,170 @@ Future<AppState> makeState() async {
 }
 
 void main() {
+  for (final replay in [true, false]) {
+    testWidgets(
+      'send preview honors conversation replay=$replay without old snapshots',
+      (tester) async {
+        final state = await makeState();
+        (state.vault as MemoryVault).keys['gemini'] = 'TEST_KEY';
+        await state.setProvider('gemini', {'model': 'test-model'});
+        await state.setSetting('online', true);
+        await state.addHistory({
+          'question': 'လစာမရ MA1234567',
+          'answer': 'prior answer',
+          'date': '2026-10-11',
+          'online': true,
+          'source_ids': [],
+          'context_snapshot': 'OLD_PRIVATE_SNAPSHOT',
+        });
+        Map<String, dynamic>? requestBody;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ChatScreen(
+                state,
+                serviceFactory: () => AiService(
+                  client: MockClient((request) async {
+                    requestBody =
+                        jsonDecode(request.body) as Map<String, dynamic>;
+                    return http.Response(
+                      jsonEncode({
+                        'candidates': [
+                          {
+                            'content': {
+                              'parts': [
+                                {
+                                  'text': jsonEncode({
+                                    'status': 'insufficient_evidence',
+                                    'answer': 'ထပ်စစ်ရန်လိုသည်',
+                                    'questions': [],
+                                    'steps': [],
+                                    'source_ids': [],
+                                    'claims': [],
+                                  }),
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      }),
+                      200,
+                    );
+                  }),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byType(TextField),
+          'အဲ့ဒါကို ဘယ်မှာတင်ရမလဲ',
+        );
+        await tester.tap(find.byTooltip('မေးမယ်'));
+        await tester.pumpAndSettle();
+        if (!replay) {
+          final toggle = find.text('ဒီစကားဝိုင်း၏ မေး/ဖြေများကို ဆက်သုံးမယ်');
+          await tester.ensureVisible(toggle);
+          await tester.pumpAndSettle();
+          await tester.tap(toggle);
+          await tester.pumpAndSettle();
+        }
+        final agree = find.text('ပို့မည့်စာသားကို စစ်ပြီး သဘောတူသည်');
+        await tester.ensureVisible(agree);
+        await tester.pumpAndSettle();
+        await tester.tap(agree);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Provider ထံ ပို့မယ်'));
+        await tester.pumpAndSettle();
+        expect(requestBody, isNotNull);
+        expect((requestBody!['contents'] as List).length, replay ? 3 : 1);
+        expect(
+          jsonEncode(requestBody),
+          isNot(contains('OLD_PRIVATE_SNAPSHOT')),
+        );
+        expect(jsonEncode(requestBody), isNot(contains('MA1234567')));
+        expect(state.history.length, 2);
+        expect(state.history.last['history_turns_sent'], replay ? 1 : 0);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        state.dispose();
+      },
+    );
+  }
+  testWidgets(
+    'guide notes and completed steps are editable and visible in Saved',
+    (tester) async {
+      final state = await makeState();
+      final guide = state.cards.firstWhere((g) => g.id == 'unpaid');
+      await tester.pumpWidget(
+        MaterialApp(home: CardDetail(state, guide, (_) {})),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('မှတ်စုရေးရန်'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byType(TextField),
+        'ရုံးကို တနင်္လာနေ့ ဆက်မေးရန်',
+      );
+      await tester.tap(find.text('မှတ်စုသိမ်းမယ်'));
+      await tester.pumpAndSettle();
+      expect(state.guideNote('unpaid'), 'ရုံးကို တနင်္လာနေ့ ဆက်မေးရန်');
+      final checkbox = find.byType(Checkbox).first;
+      await tester.ensureVisible(checkbox);
+      await tester.pumpAndSettle();
+      await tester.tap(checkbox);
+      await tester.pumpAndSettle();
+      expect(state.completedGuideSteps('unpaid'), [guide.steps.first]);
+      await tester.pumpWidget(KwrApp(state));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(NavigationBar),
+          matching: find.text('သိမ်းထား'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(guide.title), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      state.dispose();
+    },
+  );
+
+  testWidgets(
+    'new conversation excludes old case and an archived case can resume',
+    (tester) async {
+      final state = await makeState();
+      await state.addHistory({
+        'question': 'OLD_CASE_QUESTION',
+        'answer': 'old answer',
+        'date': '2026-10-11',
+        'online': false,
+        'source_ids': [],
+      });
+      final oldId = state.activeChatId;
+      await tester.pumpWidget(
+        MaterialApp(home: Scaffold(body: ChatScreen(state))),
+      );
+      await tester.pumpAndSettle();
+      expect(state.currentConversation.length, 1);
+      await tester.tap(find.text('အကြောင်းအရာသစ်'));
+      await tester.pumpAndSettle();
+      expect(state.currentConversation, isEmpty);
+      expect(state.history.length, 1);
+      expect(find.text('OLD_CASE_QUESTION'), findsNothing);
+      await tester.tap(find.text('အရင်စကားဝိုင်းများ'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OLD_CASE_QUESTION'));
+      await tester.pumpAndSettle();
+      expect(state.activeChatId, oldId);
+      expect(state.currentConversation.length, 1);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      state.dispose();
+    },
+  );
   testWidgets(
     'provider drafts survive switching and save separately for all five APIs',
     (tester) async {

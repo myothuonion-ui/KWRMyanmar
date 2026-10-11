@@ -61,10 +61,39 @@ class PublicEvidence {
   }
 }
 
-List<PublicEvidence> retrieveEvidence(HandbookIndex index, String query) => [
-  ...index.search(query, kind: 'guides', limit: 4),
-  ...index.search(query, kind: 'sources', limit: 3),
-].map(PublicEvidence.fromHit).toList();
+List<PublicEvidence> retrieveEvidence(HandbookIndex index, String query) {
+  final ranked = index.search(query, kind: 'guides', limit: 4);
+  final minimum = ranked.isNotEmpty && hasSpecificSearchIntent(query)
+      ? (ranked.first.score * .3).clamp(4, double.infinity)
+      : 4;
+  final guides = ranked.where((hit) => hit.score >= minimum).toList();
+  final evidence = <PublicEvidence>[];
+  final seen = <String>{};
+  var length = 0;
+  void add(PublicEvidence item) {
+    if (seen.contains(item.id) || length + item.text.length > 36000) return;
+    seen.add(item.id);
+    evidence.add(item);
+    length += item.text.length;
+  }
+
+  // Reviewed page links have priority over unrelated keyword matches.
+  for (final hit in guides) {
+    add(PublicEvidence.fromHit(hit));
+    for (final ref in hit.guide!.sourceRefs.take(2)) {
+      final linked = resolveEvidence(
+        'src:${ref.sourceId}:${ref.page}',
+        [],
+        index.sources,
+      );
+      if (linked != null) add(linked);
+    }
+  }
+  for (final hit in index.search(query, kind: 'sources', limit: 3)) {
+    if (hit.score >= 4) add(PublicEvidence.fromHit(hit));
+  }
+  return evidence;
+}
 
 PublicEvidence? resolveEvidence(
   String id,

@@ -1,25 +1,23 @@
-KWR Myanmar 0.2.2 — Korea life handbook for Myanmar speakers.
+KWR Myanmar 0.3.0 — practical handbook and case conversations.
 
-- AI and offline answers retrieve original source pages as well as Myanmar guides; citations open the exact page.
-- Online send preview shows the public passages and updates them when the question is edited.
-- Provider key/model drafts survive switching; one save stores each provider separately.
-- Model-list refresh no longer changes the active provider; online/offline mode and saved model update immediately.
-- Header stays visible when switching tabs; search and reading state are preserved.
-- Clean home, handbook, full-text search, saved pages and private files navigation.
-- 55 structured Myanmar guides / 114 sections across 8 categories.
-- 11 offline original sources / 610 searchable pages, including 10 complete PDFs.
-- Burmese/Korean/English aliases, original-page search and direct page opening.
-- Original PDF and selectable-text reading modes, page bookmarks, contents and text size controls.
-- Detailed social/EPS insurance guides with payers, claims, record checks and dated official rates.
-- Existing private-file encryption, local Korean/Latin OCR, pay/visa tools and all AI providers retained.
+- 30 priority guides include case questions, preparation documents, official office links, Korean phrases and a completed-step checklist.
+- Private guide notes and completed steps are encrypted locally and appear in Saved; exports include them. Notes are never automatically sent to AI.
+- New case / archived conversation controls. Online follow-ups replay up to four question/answer pairs after preview; old private-file/profile snapshots are excluded.
+- Follow-up search keeps the case topic. Colloquial Burmese unpaid-wage queries work; E-9 keywords no longer expand into E-7.
+- Exact linked original pages are prioritized and de-duplicated within a bounded evidence budget.
+- Online answers require an explicit status and citations for each listed legal claim. Missing/fabricated citations are rejected; missing-information/evidence states are displayed.
+- Tax preparation links to the NTS 2025 income-year guide published 2026-01-06; the unrelated worker PDF is no longer its primary source.
+- 55 Myanmar guides / 114 explanatory sections / 11 original offline sources / 610 pages retained, including 10 complete PDFs.
+- Existing encrypted private files, Korean/Latin OCR, pay/visa tools and six provider choices retained.
 
-Android 6.0+. No account or API key needed for handbook/search/source reading.
-Online AI needs the user's provider key, credits and supported model. Model lists
-can be refreshed per provider or model IDs entered manually. No paid key is
-included or used by tests.
+Android 6.0+. Handbook, source reading, notes and offline search need no API key.
+Online AI uses the user's supported provider key/model and credits. Tests use
+synthetic fixtures and mocked provider requests, without paid API calls.
 
-This is a public **preview APK with a development signing identity**, not a Play
-Store production release. It is not a comprehensive lawyer-reviewed legal corpus.
-Korean source snapshots have their own edition dates; the pension country table
-is from 2025-02-01. Pending visa/benefit details stay visibly marked. Myanmar
-explanations are not official translations. Entire linked websites are not bundled.
+This is a public **preview with a development signing identity**. It is not a
+comprehensive lawyer-reviewed corpus. Checklists do not guarantee eligibility
+or prescribe every required filing document. Each source keeps its own edition;
+the NPS country table is dated 2025-02-01. Unresolved pension, severance and
+immigration details remain marked. Citation validation checks structure and
+retrieved IDs, not semantic correctness. NTS's full tax PDF and entire linked
+websites are not bundled.

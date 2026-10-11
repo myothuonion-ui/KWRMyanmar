@@ -4,6 +4,7 @@ import '../core/ai_service.dart';
 import '../core/ai_evidence.dart';
 import '../core/app_state.dart';
 import '../core/context.dart';
+import '../core/conversation.dart';
 import '../core/models.dart';
 import '../core/rules.dart' show maskPrivateText;
 import 'settings.dart';
@@ -12,7 +13,8 @@ import 'source_reader.dart';
 
 class ChatScreen extends StatefulWidget {
   final AppState state;
-  const ChatScreen(this.state, {super.key});
+  final AiService Function()? serviceFactory;
+  const ChatScreen(this.state, {super.key, this.serviceFactory});
   @override
   State<ChatScreen> createState() => ChatScreenState();
 }
@@ -46,10 +48,13 @@ class ChatScreenState extends State<ChatScreen> {
     String personal,
     ProviderConfig provider,
     String model,
+    List<Map<String, dynamic>> turns,
   ) async {
     final question = TextEditingController(text: maskPrivateText(query));
     final contextInput = TextEditingController(text: personal);
     bool accepted = false;
+    bool useHistory = turns.isNotEmpty;
+    final previousMessages = conversationMessages(turns);
     final value = await showDialog<Map<String, String>>(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -81,13 +86,46 @@ class ChatScreenState extends State<ChatScreen> {
                     contextInput,
                     lines: 8,
                   ),
+                  if (turns.isNotEmpty) ...[
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: useHistory,
+                      onChanged: (v) => setDialog(() {
+                        useHistory = v ?? false;
+                        accepted = false;
+                      }),
+                      title: const Text(
+                        'ဒီစကားဝိုင်း၏ မေး/ဖြေများကို ဆက်သုံးမယ်',
+                      ),
+                      subtitle: const Text(
+                        'နောက်ဆုံး 4 တွဲအထိ · အောက်တွင် စစ်နိုင်သည်',
+                      ),
+                    ),
+                    if (useHistory)
+                      ExpansionTile(
+                        tilePadding: EdgeInsets.zero,
+                        title: const Text('ပို့မည့် အရင်မေး/ဖြေစာသား'),
+                        children: [
+                          for (final m in previousMessages)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: SelectableText(
+                                '${m['role']}\n${m['content']}',
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
                   ExpansionTile(
                     tilePadding: EdgeInsets.zero,
                     title: const Text('ပို့မည့် လက်စွဲနှင့် မူရင်းစာသား'),
                     children: [
                       for (final source in retrieveEvidence(
                         widget.state.index,
-                        question.text,
+                        conversationSearchQuery(
+                          question.text,
+                          useHistory ? turns : [],
+                        ),
                       ))
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
@@ -97,7 +135,7 @@ class ChatScreenState extends State<ChatScreen> {
                   ),
                   note(
                     context,
-                    'သက်ဆိုင်ရာ လက်စွဲနှင့် မူရင်းစာမျက်နှာမှ စာသားကိုသာ ပို့မည်။ မူရင်း PDF / ပုံနှင့် အရင် chat context ကို အလိုအလျောက်မပို့ပါ။',
+                    'သက်ဆိုင်ရာ လက်စွဲနှင့် မူရင်းစာမျက်နှာမှ စာသားကို ပို့မည်။ အရင်ရွေးခဲ့သော profile / ဖိုင်စာသားကို ပြန်မထည့်ပါ။ ယခုရွေးထားသော context နှင့် ဒီစကားဝိုင်း၏ မေး/ဖြေစာသားကို စစ်ပါ။',
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
@@ -129,6 +167,7 @@ class ChatScreenState extends State<ChatScreen> {
                       Navigator.pop(context, {
                         'question': question.text.trim(),
                         'personal': contextInput.text,
+                        'use_history': useHistory.toString(),
                       });
                     },
               child: const Text('Provider ထံ ပို့မယ်'),
@@ -149,8 +188,11 @@ class ChatScreenState extends State<ChatScreen> {
     if (busy || input.text.trim().isEmpty) return;
     final state = widget.state;
     final query = input.text.trim();
+    final sessionId = state.activeChatId;
+    final turns = state.currentConversation;
+    var searchQuery = conversationSearchQuery(query, turns);
     final online = state.settings['online'] == true;
-    var sources = retrieveEvidence(state.index, query);
+    var sources = retrieveEvidence(state.index, searchQuery);
     final token = ++generation;
     setState(() => busy = true);
     try {
@@ -161,6 +203,8 @@ class ChatScreenState extends State<ChatScreen> {
         await state.addHistory({
           'date': DateTime.now().toIso8601String(),
           'question': query,
+          'session_id': sessionId,
+          'retrieval_query': searchQuery,
           'answer': answer,
           'online': false,
           'source_ids': sources.map((s) => s.id).toList(),
@@ -183,14 +227,18 @@ class ChatScreenState extends State<ChatScreen> {
           useProfile: state.settings['profileContext'] == true,
           documents: state.documents,
         );
-        final consent = await preview(query, personal, p, model);
+        final consent = await preview(query, personal, p, model, turns);
         if (consent == null ||
             !mounted ||
             token != generation ||
             state.settings['online'] != true)
           return;
-        sources = retrieveEvidence(state.index, consent['question']!);
-        service = AiService();
+        final replay = consent['use_history'] == 'true'
+            ? turns
+            : <Map<String, dynamic>>[];
+        searchQuery = conversationSearchQuery(consent['question']!, replay);
+        sources = retrieveEvidence(state.index, searchQuery);
+        service = widget.serviceFactory?.call() ?? AiService();
         final raw = await service!.chat(
           provider: p,
           base: config['base'] ?? p.baseUrl,
@@ -198,19 +246,28 @@ class ChatScreenState extends State<ChatScreen> {
           model: model,
           system: legalSystemPrompt(sources, consent['personal']!),
           messages: [
+            ...conversationMessages(replay),
             {'role': 'user', 'content': consent['question']!},
           ],
         );
         if (!mounted || token != generation) return;
-        final answer = AiAnswer.parse(raw, sources.map((s) => s.id).toSet());
+        final answer = AiAnswer.parse(
+          raw,
+          sources.map((s) => s.id).toSet(),
+          requireGrounding: true,
+        );
         if (!answer.validated)
           throw const AiFailure(
-            'AI အဖြေပုံစံ / source IDs ကို စစ်မရပါ။ အဖြေကို မသိမ်းရသေးပါ။ အခြား model ဖြင့် ပြန်စမ်းပါ။',
+            'AI အဖြေပုံစံ / အချက်နှင့်ရင်းမြစ် ချိတ်ဆက်မှုကို စစ်မရပါ။ အဖြေကို မသိမ်းရသေးပါ။ ပြန်မေးပါ သို့မဟုတ် model ပြောင်းစမ်းပါ။',
           );
         await state.addHistory({
           'date': DateTime.now().toIso8601String(),
           'question': consent['question'],
+          'session_id': sessionId,
+          'retrieval_query': searchQuery,
           'answer': answer.answer,
+          'status': answer.status,
+          'claims': answer.claims,
           'questions': answer.questions,
           'steps': answer.steps,
           'source_ids': answer.sourceIds,
@@ -219,6 +276,7 @@ class ChatScreenState extends State<ChatScreen> {
           'model': model,
           'context_snapshot': consent['personal'],
           'source_snapshot': sources.map((s) => s.evidence).toList(),
+          'history_turns_sent': replay.length.clamp(0, 4),
         });
       }
       if (mounted && token == generation) input.clear();
@@ -230,6 +288,46 @@ class ChatScreenState extends State<ChatScreen> {
         service = null;
         if (mounted) setState(() => busy = false);
       }
+    }
+  }
+
+  Future<void> conversations() async {
+    final groups = <String, List<Map<String, dynamic>>>{};
+    for (final row in widget.state.history) {
+      final id = (row['session_id'] ?? 'legacy').toString();
+      groups.putIfAbsent(id, () => []).add(row);
+    }
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            const ListTile(title: Text('သိမ်းထားသော စကားဝိုင်းများ')),
+            if (groups.isEmpty)
+              const ListTile(title: Text('စကားဝိုင်း မရှိသေးပါ')),
+            for (final group in groups.entries.toList().reversed)
+              ListTile(
+                title: Text(
+                  group.value.first['question'].toString(),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  '${group.value.length} မေး/ဖြေ · ${group.value.last['date'].toString().split('T').first}',
+                ),
+                trailing: group.key == widget.state.activeChatId
+                    ? const Icon(Icons.check)
+                    : null,
+                onTap: () => Navigator.pop(context, group.key),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (selected != null && mounted) {
+      input.clear();
+      await widget.state.resumeConversation(selected);
     }
   }
 
@@ -285,7 +383,33 @@ class ChatScreenState extends State<ChatScreen> {
               style: const TextStyle(height: 1.9),
             ),
             for (final q in List<String>.from(row['questions'] ?? []))
-              TextButton(onPressed: () => setQuestion(q), child: Text(q)),
+              TextButton(
+                onPressed: () => setQuestion('$q\nအဖြေ: '),
+                child: Text(q),
+              ),
+            if (row['status'] == 'needs_information')
+              note(
+                context,
+                'အခြေအနေ ထပ်မေးရန်လိုသည်။ အပေါ်က မေးခွန်းကို နှိပ်ပြီး ဖြေပါ။',
+              ),
+            if (row['status'] == 'insufficient_evidence')
+              note(
+                context,
+                'ထည့်ထားသောရင်းမြစ် မလုံလောက်ပါ။ Official ရင်းမြစ်ဖြင့် ထပ်စစ်ပါ။',
+              ),
+            if ((row['claims'] as List? ?? []).isNotEmpty)
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: const Text('အချက်တစ်ခုချင်း၏ ရင်းမြစ်များ'),
+                children: [
+                  for (final claim in row['claims'] as List)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(claim['text'].toString()),
+                      subtitle: Text((claim['source_ids'] as List).join(' · ')),
+                    ),
+                ],
+              ),
             if ((row['steps'] as List? ?? []).isNotEmpty)
               sectionTitle(context, 'ဆက်လုပ်ရန်'),
             ...List<String>.from(row['steps'] ?? []).map(
@@ -351,6 +475,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   Widget buildContent(BuildContext context) {
     final state = widget.state;
+    final currentTurns = state.currentConversation;
     final online = state.settings['online'] == true;
     final provider = providers.firstWhere(
       (p) => p.id == state.settings['provider'],
@@ -385,6 +510,26 @@ class ChatScreenState extends State<ChatScreen> {
                     tooltip: 'History ရှင်းရန်',
                     onPressed: busy ? null : clear,
                     icon: const Icon(Icons.delete_sweep_outlined),
+                  ),
+                ],
+              ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: busy
+                        ? null
+                        : () async {
+                            input.clear();
+                            await state.startConversation();
+                          },
+                    icon: const Icon(Icons.add_comment_outlined),
+                    label: const Text('အကြောင်းအရာသစ်'),
+                  ),
+                  TextButton.icon(
+                    onPressed: busy ? null : conversations,
+                    icon: const Icon(Icons.history),
+                    label: const Text('အရင်စကားဝိုင်းများ'),
                   ),
                 ],
               ),
@@ -446,15 +591,15 @@ class ChatScreenState extends State<ChatScreen> {
                   ),
                 ],
               ),
-              if (state.history.isEmpty) ...[
+              if (currentTurns.isEmpty) ...[
                 const SizedBox(height: 14),
                 note(
                   context,
-                  'ဥပမာ: “အလုပ်စပြီး ရက်၂၀မှာ အလုပ်ထုတ်ခံရရင်?”၊ “E-9 ကနေ D-2 ပြောင်းချင်တယ်”၊ “လစာစာရွက်မှာ ညအပိုကြေးဘယ်လိုစစ်မလဲ?”',
+                  'ဒီစကားဝိုင်းသစ်တွင် အရင်အမှုကို မသုံးပါ။ ဥပမာ: “သူဌေးက ပိုက်ဆံမရှင်းပေးဘူး”၊ “E9 နဲ့ လစာမရလို့ အလုပ်ပြောင်းချင်တယ်”။ ဆက်မေးလျှင် ဒီစကားဝိုင်းထဲမှ အကြောင်းအရာကို ဆက်သုံးမည်။',
                 ),
               ],
-              ...state.history.reversed.take(30).map(turn),
-              if (state.history.length > 30)
+              ...currentTurns.reversed.take(30).map(turn),
+              if (currentTurns.length > 30)
                 note(
                   context,
                   'လတ်တလော အဖြေ 30 ခု ပြထားသည်။ History အများဆုံး 100 ခုကို encrypted သိမ်းထားပြီး Settings မှ export လုပ်နိုင်သည်။',

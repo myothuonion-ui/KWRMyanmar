@@ -48,13 +48,18 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y poppler-utils
-          python3 scripts/build_sources.py
+          python3 scripts/build_sources.py --restore-pinned-release
+          python3 scripts/enrich_handbook.py --check
       - name: Dependencies
         run: flutter pub get
       - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: |
+          dart format lib test integration_test
+          flutter analyze --no-fatal-infos --no-fatal-warnings
       - name: Test
-        run: flutter test
+        run: |
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          flutter test
       - name: Build APK
         run: flutter build apk --release
       - name: Package

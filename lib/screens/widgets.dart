@@ -192,6 +192,42 @@ class _CardDetailState extends State<CardDetail> {
     widget.card.sections.length,
     (_) => GlobalKey(),
   );
+  Future<void> editNote() async {
+    final input = TextEditingController(
+      text: widget.state.guideNote(widget.card.id),
+    );
+    final value = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ကိုယ့်မှတ်စု'),
+        content: SizedBox(
+          width: 500,
+          child: TextField(
+            controller: input,
+            minLines: 4,
+            maxLines: 10,
+            maxLength: 8000,
+            decoration: const InputDecoration(
+              hintText: 'ဆက်သွယ်ရက်၊ တောင်းထားသောစာရွက်၊ ဆက်လုပ်ရန်…',
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('မသိမ်းတော့ဘူး'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, input.text),
+            child: const Text('မှတ်စုသိမ်းမယ်'),
+          ),
+        ],
+      ),
+    );
+    Future<void>.delayed(const Duration(milliseconds: 400), input.dispose);
+    if (value != null) await widget.state.saveGuideNote(widget.card.id, value);
+  }
+
   Future<void> contents() async {
     final index = await showModalBottomSheet<int>(
       context: context,
@@ -233,6 +269,11 @@ class _CardDetailState extends State<CardDetail> {
         appBar: AppBar(
           title: Text(card.category),
           actions: [
+            IconButton(
+              tooltip: 'မှတ်စုရေးရန်',
+              onPressed: editNote,
+              icon: const Icon(Icons.edit_note),
+            ),
             if (card.sections.isNotEmpty)
               IconButton(
                 tooltip: 'မာတိကာ',
@@ -346,6 +387,54 @@ class _CardDetailState extends State<CardDetail> {
                     ],
                   ),
                 ),
+              if (card.procedure.questions.isNotEmpty) ...[
+                sectionTitle(context, 'အရင်သိထားရမည့် ကိုယ့်အခြေအနေ'),
+                for (final q in card.procedure.questions)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: SelectableText(
+                      '• $q',
+                      style: TextStyle(fontSize: 15 * scale, height: 1.9),
+                    ),
+                  ),
+              ],
+              if (card.procedure.documents.isNotEmpty) ...[
+                sectionTitle(context, 'ပြင်ဆင်ယူသွားရန် စာရွက်နှင့်သက်သေ'),
+                for (final d in card.procedure.documents)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: SelectableText(
+                      '• $d',
+                      style: TextStyle(fontSize: 15 * scale, height: 1.9),
+                    ),
+                  ),
+              ],
+              if (card.procedure.offices.isNotEmpty) ...[
+                sectionTitle(context, 'ဘယ်ရုံးမှာ ဘာမေးမလဲ'),
+                for (final office in card.procedure.offices)
+                  Card(
+                    child: ListTile(
+                      title: Text(office['name']!),
+                      subtitle: Text(
+                        office['action']!,
+                        style: const TextStyle(height: 1.8),
+                      ),
+                      trailing: const Icon(Icons.open_in_new, size: 18),
+                      onTap: () => openSource(context, office['url']!),
+                    ),
+                  ),
+              ],
+              if (card.procedure.phrases.isNotEmpty) ...[
+                sectionTitle(context, 'ရုံးမှာပြောရန် ကိုရီးယားစကား'),
+                for (final phrase in card.procedure.phrases)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: SelectableText(
+                      '${phrase['ko']}\n${phrase['mm']}',
+                      style: TextStyle(fontSize: 15 * scale, height: 1.9),
+                    ),
+                  ),
+              ],
               if (card.steps.isNotEmpty) ...[
                 const SizedBox(height: 28),
                 Text(
@@ -358,22 +447,13 @@ class _CardDetailState extends State<CardDetail> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          width: 26,
-                          height: 26,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary
-                                .withValues(alpha: .1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            '${i + 1}',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontSize: 12,
-                            ),
-                          ),
+                        Checkbox(
+                          semanticLabel: card.steps[i],
+                          value: state
+                              .completedGuideSteps(card.id)
+                              .contains(card.steps[i]),
+                          onChanged: (_) =>
+                              state.toggleGuideStep(card.id, card.steps[i]),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -386,6 +466,25 @@ class _CardDetailState extends State<CardDetail> {
                     ),
                   ),
               ],
+              sectionTitle(context, 'ကိုယ့်မှတ်စု'),
+              if (state.guideNote(card.id).isNotEmpty)
+                SelectableText(
+                  state.guideNote(card.id),
+                  style: TextStyle(fontSize: 15 * scale, height: 1.9),
+                ),
+              TextButton.icon(
+                onPressed: editNote,
+                icon: const Icon(Icons.edit_note),
+                label: Text(
+                  state.guideNote(card.id).isEmpty
+                      ? 'မှတ်စုရေးမယ်'
+                      : 'မှတ်စုပြင်မယ်',
+                ),
+              ),
+              note(
+                context,
+                'မှတ်စုနှင့် စစ်စာရင်းကို ဖုန်းပေါ်တွင် encrypted သိမ်းသည်။ AI ထံ အလိုအလျောက်မပို့ပါ။',
+              ),
               const Divider(height: 44),
               Text(
                 'ရင်းမြစ်နှင့် မူရင်းအပြည့်အစုံ',
@@ -395,6 +494,24 @@ class _CardDetailState extends State<CardDetail> {
                 context,
                 'မြန်မာရှင်းလင်းချက် စစ်ဆေးရက် ${card.checked}\n${card.source}',
               ),
+              for (final ref in card.sourceRefs)
+                if (state.sources.any((s) => s.id == ref.sourceId))
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.find_in_page_outlined),
+                    title: Text(ref.label),
+                    subtitle: Text('မူရင်း PDF · စာမျက်နှာ ${ref.page}'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => SourceReader(
+                          state,
+                          state.sources.firstWhere((s) => s.id == ref.sourceId),
+                          initialPage: ref.page,
+                        ),
+                      ),
+                    ),
+                  ),
               for (final s in linked)
                 Card(
                   child: ListTile(

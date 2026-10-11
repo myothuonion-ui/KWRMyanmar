@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'models.dart';
 import 'storage.dart';
 import 'handbook.dart';
+import 'conversation.dart';
 
 class AppState extends ChangeNotifier {
   final Vault vault;
@@ -44,6 +45,8 @@ class AppState extends ChangeNotifier {
     data.putIfAbsent('history', () => []);
     data.putIfAbsent('bookmarks', () => []);
     data.putIfAbsent('events', () => []);
+    data.putIfAbsent('guide_notes', () => <String, dynamic>{});
+    data.putIfAbsent('guide_progress', () => <String, dynamic>{});
     final sources =
         (jsonDecode(await rootBundle.loadString('assets/sources.json')) as List)
             .map((j) => SourceDocument.fromJson(Map<String, dynamic>.from(j)))
@@ -61,6 +64,38 @@ class AppState extends ChangeNotifier {
   List<Map<String, dynamic>> get history => (data['history'] as List)
       .map((j) => Map<String, dynamic>.from(j))
       .toList();
+  String get activeChatId => (data['active_chat_id'] ?? 'current').toString();
+  List<Map<String, dynamic>> get currentConversation =>
+      sessionTurns(history, activeChatId);
+  String guideNote(String id) =>
+      ((data['guide_notes'] as Map? ?? {})[id] ?? '').toString();
+  List<String> completedGuideSteps(String id) =>
+      List<String>.from((data['guide_progress'] as Map? ?? {})[id] ?? []);
+  Future<void> saveGuideNote(String id, String note) async {
+    final notes =
+        data.putIfAbsent('guide_notes', () => <String, dynamic>{}) as Map;
+    note.trim().isEmpty ? notes.remove(id) : notes[id] = note.trim();
+    await save();
+  }
+
+  Future<void> toggleGuideStep(String id, String step) async {
+    final completed = completedGuideSteps(id);
+    completed.contains(step) ? completed.remove(step) : completed.add(step);
+    (data.putIfAbsent('guide_progress', () => <String, dynamic>{}) as Map)[id] =
+        completed;
+    await save();
+  }
+
+  Future<void> startConversation() async {
+    data['active_chat_id'] = 'case_${DateTime.now().microsecondsSinceEpoch}';
+    await save();
+  }
+
+  Future<void> resumeConversation(String id) async {
+    data['active_chat_id'] = id;
+    await save();
+  }
+
   List<String> get bookmarks => List<String>.from(data['bookmarks']);
   List<Map<String, dynamic>> get events => (data['events'] as List)
       .map((j) => Map<String, dynamic>.from(j))
@@ -117,6 +152,7 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> addHistory(Map<String, dynamic> turn) async {
+    turn = {...turn, 'session_id': turn['session_id'] ?? activeChatId};
     final rows = history..add(turn);
     data['history'] = rows
         .skip(rows.length > 100 ? rows.length - 100 : 0)
@@ -126,6 +162,7 @@ class AppState extends ChangeNotifier {
 
   Future<void> clearHistory() async {
     data['history'] = [];
+    data.remove('active_chat_id');
     await save();
   }
 
@@ -154,6 +191,8 @@ class AppState extends ChangeNotifier {
       'history': [],
       'bookmarks': [],
       'events': [],
+      'guide_notes': <String, dynamic>{},
+      'guide_progress': <String, dynamic>{},
     };
     await save();
   }

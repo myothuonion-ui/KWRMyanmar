@@ -35,15 +35,27 @@ void main() {
         'confirmed': true,
         'sector': 'PRIVATE_TEST_FACT',
       });
-      final encrypted = await File(
-        '${state.vault.directory.path}/state.enc',
-      ).readAsBytes();
+      final encrypted = await File('${state.vault.directory.path}/state.enc')
+          .readAsBytes();
       expect(
         utf8.decode(encrypted, allowMalformed: true),
         isNot(contains('PRIVATE_TEST_FACT')),
       );
       final reopened = await Vault.open();
       expect((await reopened.load())['profile']['sector'], 'PRIVATE_TEST_FACT');
+      await state.saveGuideNote('unpaid', 'PRIVATE_NOTE_NATIVE');
+      final step = state.cards.firstWhere((c) => c.id == 'unpaid').steps.first;
+      await state.toggleGuideStep('unpaid', step);
+      final saved = await reopened.load();
+      expect(saved['guide_notes']['unpaid'], 'PRIVATE_NOTE_NATIVE');
+      expect(saved['guide_progress']['unpaid'], [step]);
+      expect(
+        utf8.decode(
+          await File('${state.vault.directory.path}/state.enc').readAsBytes(),
+          allowMalformed: true,
+        ),
+        isNot(contains('PRIVATE_NOTE_NATIVE')),
+      );
       await reopened.setKey('gemini', 'TEST_NOT_REAL');
       expect(await reopened.keyFor('gemini'), 'TEST_NOT_REAL');
       await reopened.setKey('gemini', '');
