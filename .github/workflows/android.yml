@@ -12,6 +12,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      KWR_SIGNING_STORE_PASSWORD: ${{ secrets.KWR_SIGNING_STORE_PASSWORD }}
+      KWR_SIGNING_KEY_ALIAS: ${{ secrets.KWR_SIGNING_KEY_ALIAS }}
+      KWR_SIGNING_KEY_PASSWORD: ${{ secrets.KWR_SIGNING_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -32,11 +36,6 @@ jobs:
           flutter create --platforms=android --org=com.myothuonion --project-name=kwrmyanmar --no-pub /tmp/kwr_host
           cp -R /tmp/kwr_host/android .
           python3 scripts/prepare_android.py
-      - name: Keep preview signing identity
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: kwr-preview-signing-v1
       - name: Offline source cache
         uses: actions/cache@v4
         with:
@@ -60,6 +59,11 @@ jobs:
         run: |
           python3 -m unittest discover -s scripts -p 'test_*.py'
           flutter test
+      - name: Restore explicit upgrade signing key
+        if: ${{ !contains(github.event.head_commit.message, '[bootstrap]') }}
+        env:
+          KWR_SIGNING_KEYSTORE_B64: ${{ secrets.KWR_SIGNING_KEYSTORE_B64 }}
+        run: python3 scripts/configure_signing.py
       - name: Build APK
         run: flutter build apk --release
       - name: Package
@@ -69,6 +73,9 @@ jobs:
           cp build/app/outputs/flutter-apk/app-release.apk "dist/KWRMyanmar-v${KWR_VERSION}.apk"
           cd dist
           sha256sum "KWRMyanmar-v${KWR_VERSION}.apk" > SHA256SUMS.txt
+      - name: Verify upgrade signature before publishing
+        if: ${{ !contains(github.event.head_commit.message, '[bootstrap]') }}
+        run: python3 scripts/verify_signing.py
       - name: Enable emulator KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
