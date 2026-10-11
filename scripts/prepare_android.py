@@ -2,6 +2,24 @@ from pathlib import Path
 
 p=Path('android/app/build.gradle.kts')
 text=p.read_text()
+text=text.replace('android {', '''val kwrStoreFile = System.getenv("KWR_SIGNING_STORE_FILE").orEmpty()
+
+android {
+    signingConfigs {
+        if (kwrStoreFile.isNotBlank()) {
+            create("kwrUpgrade") {
+                storeFile = file(kwrStoreFile)
+                storePassword = System.getenv("KWR_SIGNING_STORE_PASSWORD")
+                keyAlias = System.getenv("KWR_SIGNING_KEY_ALIAS")
+                keyPassword = System.getenv("KWR_SIGNING_KEY_PASSWORD")
+                enableV1Signing = true
+                enableV2Signing = true
+            }
+        }
+    }''', 1)
+assert 'signingConfig = signingConfigs.getByName("debug")' in text, 'Signing template changed'
+text=text.replace('signingConfig = signingConfigs.getByName("debug")',
+                  'signingConfig = signingConfigs.getByName(if (kwrStoreFile.isBlank()) "debug" else "kwrUpgrade")')
 text=text.replace('minSdk = flutter.minSdkVersion','minSdk = 23')
 assert 'release {' in text, 'Flutter Android template changed'
 text=text.replace('release {','release {\n            proguardFiles("proguard-rules.pro")',1)
