@@ -2,7 +2,7 @@
 
 These are preparation questions/checklists, not a lawyer review or guaranteed
 eligibility. Page numbers are physical PDF pages in the hash-pinned source pack.
-Run after expand_cards.py when refreshing the base handbook; --check is used in CI.
+Run after expand_handbook.py when refreshing the base handbook; --check is used in CI.
 """
 import argparse
 import copy

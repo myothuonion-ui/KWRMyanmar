@@ -22,6 +22,7 @@ class ChatScreen extends StatefulWidget {
 class ChatScreenState extends State<ChatScreen> {
   final input = TextEditingController();
   bool busy = false;
+  bool reviewing = false;
   AiService? service;
   int generation = 0;
   void setQuestion(String text) {
@@ -40,7 +41,11 @@ class ChatScreenState extends State<ChatScreen> {
     generation++;
     service?.close();
     service = null;
-    if (mounted) setState(() => busy = false);
+    if (mounted)
+      setState(() {
+        busy = false;
+        reviewing = false;
+      });
   }
 
   Future<Map<String, String>?> preview(
@@ -227,6 +232,7 @@ class ChatScreenState extends State<ChatScreen> {
           useProfile: state.settings['profileContext'] == true,
           documents: state.documents,
         );
+        setState(() => reviewing = true);
         final consent = await preview(query, personal, p, model, turns);
         if (consent == null ||
             !mounted ||
@@ -239,6 +245,7 @@ class ChatScreenState extends State<ChatScreen> {
         searchQuery = conversationSearchQuery(consent['question']!, replay);
         sources = retrieveEvidence(state.index, searchQuery);
         service = widget.serviceFactory?.call() ?? AiService();
+        setState(() => reviewing = false);
         final raw = await service!.chat(
           provider: p,
           base: config['base'] ?? p.baseUrl,
@@ -286,7 +293,11 @@ class ChatScreenState extends State<ChatScreen> {
       if (token == generation) {
         service?.close();
         service = null;
-        if (mounted) setState(() => busy = false);
+        if (mounted)
+          setState(() {
+            busy = false;
+            reviewing = false;
+          });
       }
     }
   }
@@ -607,7 +618,7 @@ class ChatScreenState extends State<ChatScreen> {
             ],
           ),
         ),
-        if (busy) const LinearProgressIndicator(),
+        if (busy && !reviewing) const LinearProgressIndicator(),
         SafeArea(
           top: false,
           child: Padding(
